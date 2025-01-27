@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArcGIS defaultAssembly="ProAppModule2.dll" defaultNamespace="ProAppModule2" xmlns="http://schemas.esri.com/DADF/Registry" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
+  <AddInInfo id="{88cdb0c8-fdba-4826-8d95-64c9ab2c935e}" version="1.0" desktopVersion="3.3.52636" product="ArcGISPro">
+    <Name>ProAppModule2</Name>
+    <Description>ProAppModule2 description</Description>
+    <Image>Images\AddinDesktop32.png</Image>
+    <Author>ASUS</Author>
+    <Company>Acme</Company>
+    <Date>18/09/2024 11:20:56</Date>
+    <Subject>Framework</Subject>
+    <!-- Note subject can be one or more of these topics:
+                    Content, Framework, Editing, Geodatabase, Geometry, Geoprocessing, Layouts, Map Authoring, Map Exploration -->
+  </AddInInfo>
+  <conditions>
+    <!-- our custom condition -->
+    <insertCondition id="Tab_Toggle_condition" caption="Toggle Tab">
+      <!-- our condition is set true or false based on this underlying state -->
+      <state id="tab_state" />
+    </insertCondition>
+	  
+    <insertCondition id="Control_editg_cond" caption="Toggle Controls">
+      <!-- our condition is set true or false based on this underlying state -->
+      <state id="controls_state" />
+    </insertCondition>
+	  
+    <insertCondition id="Control_editat_cond" caption="Toggle ControlsAtb">
+      <!-- our condition is set true or false based on this underlying state -->
+      <state id="controls_atb" />
+    </insertCondition>
+	  
+    <insertCondition id="Control_editbox" caption="Toggle Controlebox">
+      <!-- our condition is set true or false based on this underlying state -->
+      <state id="controls_edbox" />
+    </insertCondition>
+	  
+    <insertCondition id="Control_createg_cond" caption="Toggle ControlCrt">
+      <!-- our condition is set true or false based on this underlying state -->
+      <state id="controls_crtng" />
+    </insertCondition>	  
+  </conditions>
+	
+  <modules>
+    <insertModule id="ProAppModule2_Module" className="Module1" autoLoad="false" caption="Module1">
+      <!-- uncomment to have the control hosted on a separate tab-->
+      <tabs>
+        <tab id="ProAppModule2_Tab1" caption="Revision Cambios">
+          <group refID="ProAppModule2_Group1" />
+          <group refID="ComboBoxShowingLayers_Group1" />
+          <group refID="ProAppModule2_Group2" />
+          <group refID="ProAppModule2_Group3" />
+          <group refID="ProAppModule2_Group4" />
+          <group refID="ProAppModule2_Group5" />
+          <group refID="ProAppModule2_Group6" />
+          <group refID="ProAppModule2_Group7" />
+          <group refID="ProAppModule2_Group8" />
+		  <group refID="ProAppModule2_Group9" />
+		  <group refID="ProAppModule2_Group10" />
+		</tab>
+      </tabs>
+      <groups>
+        <!-- comment this out if you have no controls on the Addin tab to avoid
+              an empty group-->
+        <group id="ProAppModule2_Group1" caption="Info" appearsOnAddInTab="true">
+          <!-- host controls within groups -->
+          <button refID="ProAppModule2_Button1" size="large" />
+          <!--<button refID="ProAppModule2_CustomDockpane_ShowButton" size="large" />-->
+          <button refID="ProAppModule2_CltArea" size="large" />
+          <button refID="esri_mapping_measureDistanceTool" size="large" />
+          <button refID="esri_mapping_exploreTool" size="large" />
+        </group>
+        <group id="ComboBoxShowingLayers_Group1" caption="Seleccion" keytip="G0" appearsOnAddInTab="true">
+          <!-- host controls within groups -->
+          <comboBox refID="ComboBoxShowingLayers_SelectFeature" />
+          <tool refID="ProAppModule2_MapTool1" size="large" />
+        </group>
+        <group id="ProAppModule2_Group2" caption="Revision" appearsOnAddInTab="true">
+          <!-- host controls within groups -->
+          <button refID="ProAppModule2_Approvefeat" size="large" />
+          <button refID="ProAppModule2_Deletefeat" size="large" />
+          <button refID="ProAppModule2_Editgeo" size="large" />
+          <button refID="ProAppModule2_Editatb" size="large" />
+          <button refID="ProAppModule2_Creategeo" size="large" />
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	
+		  <button refID="esri_editing_ShowEditFeaturesBtn" />
+		  <button refID="esri_editing_ShowCreateFeaturesBtn" />
+          <button refID="esri_editing_SaveEditsBtn" />
+          <button refID="esri_editing_DiscardEditsBtn" />-->
+        </group>
+        <group id="ProAppModule2_Group3" caption="Guardado" appearsOnAddInTab="true">
+          <!-- host controls within groups -->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	
+		  <button refID="esri_editing_ShowEditFeaturesBtn" />
+		  <button refID="esri_editing_ShowCreateFeaturesBtn" />-->
+          <button refID="esri_editing_SaveEditsBtn" />
+          <button refID="esri_editing_DiscardEditsBtn" />
+        </group>
+        <group id="ProAppModule2_Group4" caption="Edicion Geometrica" appearsOnAddInTab="false" condition="Control_editg_cond">
+          <!-- host controls within groups -->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+          <button refID="esri_editing_ShowEditFeaturesBtn" />
+          <!--<button refID="esri_editing_ShowCreateFeaturesBtn" />
+		  <button refID="esri_editing_SaveEditsBtn" />
+		  <button refID="esri_editing_DiscardEditsBtn" />-->
+        </group>
+        <group id="ProAppModule2_Group5" caption="Edicion Atributos" appearsOnAddInTab="false" condition="Control_editat_cond">
+          <!--<editBox refID="ProAppModule2_Clase2018" size="middle" />-->
+          <button refID="esri_editing_ShowAttributes" />
+        </group>
+        <group id="ProAppModule2_Group6" caption="Crear Geometria" appearsOnAddInTab="false" condition="Control_createg_cond">
+          <!-- host controls within groups -->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+          <button refID="esri_editing_ShowCreateFeaturesBtn" />
+        </group>
+        <group id="ProAppModule2_Group7" caption="Revisar Proceso" appearsOnAddInTab="true">
+          <!-- host controls within groups -->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+          <button refID="ProAppModule2_Reviewer" size="large" />
+          <!--<editBox refID="ProAppModule2_Revision" size="middle" />"-->
+        </group>
+        <group id="ProAppModule2_Group8" caption="Validacion" appearsOnAddInTab="false" condition="Control_editbox">
+          <!-- host controls within groups -->
+          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+          <editBox refID="ProAppModule2_Revision" size="middle" />
+        </group>
+		<group id="ProAppModule2_Group9" caption="Resultados CLC" appearsOnAddInTab="true">
+			  <!-- host controls within groups -->
+		    <button refID="ProAppModule2_DockpaneCorineAnalysis_ShowButton" size="large" />
+		</group>
+		<group id="ProAppModule2_Group10" caption="Editar Capa Destino" appearsOnAddInTab="true">
+			<!-- host controls within groups -->
+			<button refID="ProAppModule2_Split_Feature_Button" size="large" />
+			<button refID="ProAppModule2_Merge_Feature_Button" size="large" />
+		</group>
+		<group id="ProAppModule2_Group11" caption="Evaluar en Mapa Externo" appearsOnAddInTab="true">
+			<!-- host controls within groups -->
+			<tool refID="ProAppModule2_Open_Webmap_Bing_Button" size="middle" />
+			<tool refID="ProAppModule2_Open_Webmap_Google_Button" size="middle" />
+			<tool refID="ProAppModule2_Open_Webmap_Esri_Button" size="middle" />
+		</group>		  
+      </groups>
+		
+      <controls>
+        <!-- add your controls here -->
+        <button id="ProAppModule2_Button1" caption="Info" className="UI.Buttons.Button1" loadOnClick="true" smallImage="MetadataDocument16" largeImage="MetadataDocument32">
+          <tooltip heading="Tooltip Heading">Informacion URL<disabledText /></tooltip>
+        </button>
+		  
+        <comboBox id="ComboBoxShowingLayers_SelectFeature" caption="Zona" className="SelectFeature" keytip="X1" editHint="Zoom a Zona" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+          <tooltip heading="Select State Feature">
+				Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText /></tooltip>
+        </comboBox>
+		  
+        <tool id="ProAppModule2_MapTool1" caption="Seleccion Poligono" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
+          <tooltip heading="Tooltip Heading">Seleccionar Poligono<disabledText /></tooltip>
+          <content guid="00c1fa9c-09cd-4620-88d1-620c2feb0935" />
+        </tool>
+		  
+        <button id="ProAppModule2_CustomDockpane_ShowButton" caption="Show CustomDockpane" className="CustomDockpane_ShowButton" loadOnClick="true" smallImage="GenericButtonPurple16" largeImage="GenericButtonPurple32">
+          <tooltip heading="Show Dockpane">Show Dockpane<disabledText /></tooltip>
+        </button>
+		  
+        <button id="ProAppModule2_Deletefeat" caption="Descartar Cambio" className="UI.Buttons.Deletefeat" loadOnClick="true" smallImage="GenericDeleteRed16" largeImage="GenericDeleteRed32">
+          <tooltip heading="Tooltip Heading">Descartar Poligono de Cambio seleccionado<disabledText /></tooltip>
+        </button>
+		  
+        <button id="ProAppModule2_Approvefeat" caption="Aprobar Cambio" className="UI.Buttons.Approvefeat" loadOnClick="true" smallImage="GenericCheckMark16" largeImage="GenericCheckMark32">
+          <tooltip heading="Tooltip Heading">Aprobar Poligono de Cambio seleccionado<disabledText /></tooltip>
+        </button>
+		  
+        <button id="ProAppModule2_Editgeo" caption="Editar Geometria" className="UI.Buttons.Editgeo" loadOnClick="true" smallImage="EditingSketchTool16" largeImage="EditingSketchTool32">
+          <tooltip heading="Tooltip Heading">Editar Geometria Poligono de Cambio seleccionado<disabledText /></tooltip>
+        </button>
+		  
+        <button id="ProAppModule2_Editatb" caption="Editar Atributos" className="UI.Buttons.Editatb" loadOnClick="true" smallImage="EditingAdjustmentAttributeTransferMapping16" largeImage="EditingAdjustmentAttributeTransferMapping32">
+          <tooltip heading="Tooltip Heading">Editar Atributos Poligono de Cambio seleccionado<disabledText /></tooltip>
+        </button>
+		  
+        <editBox id="ProAppModule2_Clase2018" caption="Clase 2018: " className="ModValueToSetcl2018" sizeString="AAAAAAAAAAAAAAAAA" condition="Control_editbox"></editBox>
+		  
+        <button id="ProAppModule2_Creategeo" caption="Agregar Poligono" className="UI.Buttons.Creategeo" loadOnClick="true" smallImage="EditingTemplateNewGroup16" largeImage="EditingTemplateNewGroup32">
+          <tooltip heading="Tooltip Heading">Crear Nuevo Poligono de Cambio<disabledText /></tooltip>
+        </button>
+		  
+        <button id="ProAppModule2_Reviewer" caption="Validar" className="UI.Buttons.Reviewer" loadOnClick="true" smallImage="ReviewerReadytoUseRules16" largeImage="ReviewerReadytoUseRules32">
+          <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
+        </button>
+		  
+        <editBox id="ProAppModule2_Revision" caption="Revision: " className="EditboxRv" sizeString="AAAAAAAAAAAAAAAAAAAAAAAAAAAAA" condition="Control_editbox"></editBox>
+		  
+        <button id="ProAppModule2_CltArea" caption="Calcular Area" className="UI.Buttons.CltArea" loadOnClick="true" smallImage="MeasureArea16" largeImage="MeasureArea32">
+          <tooltip heading="Tooltip Heading">
+				Calcular area poligonos seleccionados<disabledText /></tooltip>
+        </button>
+		  
+		<button id="ProAppModule2_DockpaneCorineAnalysis_ShowButton" caption="Resultados CLC" className="BookmarkDockpane_ShowButton" loadOnClick="true" smallImage="ContentsWindowShow16" largeImage="ContentsWindowShow32">
+			<tooltip heading="Show Dockpane">
+			    Resultados CLC<disabledText />
+		    </tooltip>
+		</button>
+
+		<tool id="ProAppModule2_Split_Feature_Button" caption="Cortar Poligono" className="UI.MapTools.SelectDrawAndSplitTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EditingSplitFeaturesTool16" largeImage="EditingSplitFeaturesTool32">
+			<tooltip heading="Cortar poligono">	Cortar poligono<disabledText />	</tooltip>
+		</tool>
+		  
+		<button id="ProAppModule2_Merge_Feature_Button" caption="Unir Poligono" className="" loadOnClick="true" keytip="z2" smallImage="EditingFeatureMerge16" largeImage="EditingFeatureMerge32">
+			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
+		</button>
+		  
+		<tool id="ProAppModule2_Open_Webmap_Bing_Button" caption="Abrir en Bing" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+			<tooltip heading="Abrir en Bing">Abrir en Bing<disabledText /></tooltip>			
+		</tool>
+
+		  <tool id="ProAppModule2_Open_Webmap_Google_Button" caption="Abrir en Google" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+			<tooltip heading="Abrir en Google">Abrir en Google<disabledText /></tooltip>			
+		</tool>
+
+		  <tool id="ProAppModule2_Open_Webmap_Esri_Button" caption="Abrir en Esri" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+			<tooltip heading="Abrir en Esri">Abrir en Esri<disabledText /></tooltip>			
+		</tool>
+		  
+	  </controls>
+		
+      <dockPanes>
+        <dockPane id="ProAppModule2_CustomDockpane" caption="Atributos Poligono Seleccionado" className="CustomDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
+            <content className="CustomDockpaneView" />
+        </dockPane>
+		<dockPane id="ProAppModule2_Corine_Analysis_DockPane" className="CorineAnalysisDockpaneViewModel" caption="Resultados e Info">
+		    <content className="CorineAnalysisDockpaneView" />
+		</dockPane>
+      </dockPanes>
+    </insertModule>
+  </modules>
+</ArcGIS>
