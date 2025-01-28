@@ -199,11 +199,11 @@
 		    </tooltip>
 		</button>
 
-		<tool id="ProAppModule2_Split_Feature_Button" caption="Cortar Poligono" className="UI.MapTools.SelectDrawAndSplitTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EditingSplitFeaturesTool16" largeImage="EditingSplitFeaturesTool32">
+		<tool id="ProAppModule2_Split_Feature_Button" caption="Cortar Poligono" className="UI.MapTools.SplitTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EditingSplitFeaturesTool16" largeImage="EditingSplitFeaturesTool32">
 			<tooltip heading="Cortar poligono">	Cortar poligono<disabledText />	</tooltip>
 		</tool>
 		  
-		<button id="ProAppModule2_Merge_Feature_Button" caption="Unir Poligono" className="" loadOnClick="true" keytip="z2" smallImage="EditingFeatureMerge16" largeImage="EditingFeatureMerge32">
+		<button id="ProAppModule2_Merge_Feature_Button" caption="Unir Poligono" className="UI.MapTools.MergeTool" loadOnClick="true" keytip="z2" smallImage="EditingFeatureMerge16" largeImage="EditingFeatureMerge32">
 			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
 		</button>
 		  
