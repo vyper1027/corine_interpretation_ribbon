@@ -207,15 +207,15 @@
 			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
 		</button>
 		  
-		<tool id="ProAppModule2_Open_Webmap_Bing_Button" caption="Abrir en Bing" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+		<tool id="ProAppModule2_Open_Webmap_Bing_Button" caption="Abrir en Bing" className="UI.MapTools.OpenWebMapsTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
 			<tooltip heading="Abrir en Bing">Abrir en Bing<disabledText /></tooltip>			
 		</tool>
 
-		  <tool id="ProAppModule2_Open_Webmap_Google_Button" caption="Abrir en Google" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+		  <tool id="ProAppModule2_Open_Webmap_Google_Button" caption="Abrir en Google" className="UI.MapTools.OpenWebMapsTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
 			<tooltip heading="Abrir en Google">Abrir en Google<disabledText /></tooltip>			
 		</tool>
 
-		  <tool id="ProAppModule2_Open_Webmap_Esri_Button" caption="Abrir en Esri" className="UI.MapTools.GetCoordinatesFromClicTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
+		  <tool id="ProAppModule2_Open_Webmap_Esri_Button" caption="Abrir en Esri" className="UI.MapTools.OpenWebMapsTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">
 			<tooltip heading="Abrir en Esri">Abrir en Esri<disabledText /></tooltip>			
 		</tool>
 		  

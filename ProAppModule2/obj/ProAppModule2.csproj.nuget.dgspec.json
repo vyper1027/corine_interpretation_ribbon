@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Chris\\Downloads\\Add-In\\ProAppModule2\\ProAppModule2\\ProAppModule2.csproj": {}
+    "D:\\corine_interpretation_ribbon\\ProAppModule2\\ProAppModule2.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Chris\\Downloads\\Add-In\\ProAppModule2\\ProAppModule2\\ProAppModule2.csproj": {
+    "D:\\corine_interpretation_ribbon\\ProAppModule2\\ProAppModule2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Chris\\Downloads\\Add-In\\ProAppModule2\\ProAppModule2\\ProAppModule2.csproj",
+        "projectUniqueName": "D:\\corine_interpretation_ribbon\\ProAppModule2\\ProAppModule2.csproj",
         "projectName": "ProAppModule2",
-        "projectPath": "C:\\Users\\Chris\\Downloads\\Add-In\\ProAppModule2\\ProAppModule2\\ProAppModule2.csproj",
+        "projectPath": "D:\\corine_interpretation_ribbon\\ProAppModule2\\ProAppModule2.csproj",
         "packagesPath": "C:\\Users\\Chris\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Chris\\Downloads\\Add-In\\ProAppModule2\\ProAppModule2\\obj\\",
+        "outputPath": "D:\\corine_interpretation_ribbon\\ProAppModule2\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

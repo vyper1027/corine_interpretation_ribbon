@@ -126,7 +126,7 @@ namespace ProAppModule2
                 ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No MapView currently active. Exiting...", "Info");
                 return;
             }
-            QueuedTask.Run(() =>
+            QueuedTask.Run(async() =>
             {
                 //Project.Current.SetIsEditingEnabledAsync(true);
                 // Get the layer selected in the Contents pane, and prompt if there is none:
@@ -136,8 +136,7 @@ namespace ProAppModule2
                 //    return;
                 //}
                 // Check to see if there is a selected feature layer
-                const string layer = "Vectores_Cambios_18_20";
-                var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layer));
+                var featLayer = await Utils.GetDynamicLayer("vectoresDeCambio");
 
                 //var featLayer = MapView.Active.GetSelectedLayers().First() as FeatureLayer;
                 if (featLayer == null)
@@ -223,12 +222,11 @@ namespace ProAppModule2
                 ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No MapView currently active. Exiting...", "Info");
                 return;
             }
-            QueuedTask.Run(() =>
-            {              
-                // Check to see if there is a selected feature layer
-                const string layer = "Vectores_Cambios_18_20";
-                var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layer));
-                
+            QueuedTask.Run(async () =>
+            {
+                // Check to see if there is a selected feature layer               
+                var featLayer = await Utils.GetDynamicLayer("vectoresDeCambio");
+
                 if (featLayer == null)
                 {
                     ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No esta cargada la capa de cambios...", "Info");

@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace ProAppModule2
 {
@@ -176,6 +177,31 @@ namespace ProAppModule2
             {
                 dockPane.StatusMessage = message; // Reemplazar el mensaje
             }
+        }
+
+        /// <summary>
+        /// Obtiene una capa específica según el tipo solicitado.
+        /// </summary>
+        /// <param name="layerType">Tipo de capa: "vectores" o "corine"</param>
+        /// <returns>FeatureLayer encontrada o null si no existe.</returns>
+        public static Task<FeatureLayer> GetDynamicLayer(string layerType)
+        {
+            return QueuedTask.Run(() =>
+            {
+                var layers = MapView.Active?.Map?.GetLayersAsFlattenedList().OfType<FeatureLayer>();
+                if (layers == null) return null;
+
+                string pattern = layerType switch
+                {
+                    "vectoresDeCambio" => @"^Vectores_Cambios_\d+_\d+$", // Busca Vectores_Cambios_XX_XX
+                    "capaCorine" => @"^Cobertura_Corine_\d{4}$", // Busca Cobertura_Corine_YYYY (año de 4 dígitos)
+                    _ => null
+                };
+
+                if (pattern == null) return null;
+
+                return layers.FirstOrDefault(fl => Regex.IsMatch(fl.Name, pattern));
+            });
         }
 
     }

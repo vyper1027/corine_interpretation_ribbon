@@ -24,63 +24,57 @@ using ArcGIS.Core.CIM;
 
 namespace ProAppModule2.UI.MapTools
 {
-    /// <summary>
-    /// A sample sketch tool that uses a polygon selection to merge selected polygons.
-    /// </summary>
     class MergeTool : MapTool
     {
         public MergeTool() : base()
         {
-            // Define the type of tool: Polygon for selection.
-            SketchType = SketchGeometryType.Polygon;
+            SketchType = SketchGeometryType.Line;
             IsSketchTool = true;
             SketchOutputMode = SketchOutputMode.Map;
+
+            Utils.SendMessageToDockPane("Herramienta de unión activada. Dibuje una línea para seleccionar polígonos.");
         }
 
-        /// <summary>
-        /// Called when the sketch finishes. This is where we will perform the merge operation.
-        /// </summary>
-        /// <param name="geometry">The geometry created by the sketch.</param>
-        /// <returns>A Task returning a Boolean indicating if the merge operation was successfully handled.</returns>
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
+            Utils.SendMessageToDockPane("Selección completada. Iniciando proceso de unión...");
             return QueuedTask.Run(() => ExecuteMerge(geometry));
         }
 
-        /// <summary>
-        /// Method to perform the merge operation on selected features.
-        /// </summary>
-        /// <param name="geometry">Polygon geometry used to perform the selection of features to merge.</param>
-        /// <returns>If the merge operation was successful.</returns>
         protected Task<bool> ExecuteMerge(Geometry geometry)
         {
             if (geometry == null)
+            {
+                Utils.SendMessageToDockPane("No se encontró geometría válida. Cancelando operación.");
                 return Task.FromResult(false);
+            }
 
-            // Create a collection of editable polygon feature layers
             var editableLayers = ActiveMapView.Map.GetLayersAsFlattenedList()
                 .OfType<FeatureLayer>()
                 .Where(lyr => lyr.CanEditData() && lyr.ShapeType == esriGeometryType.esriGeometryPolygon);
 
             if (!editableLayers.Any())
+            {
+                Utils.SendMessageToDockPane("No hay capas poligonales editables disponibles.");
                 return Task.FromResult(false);
+            }
 
-            // Create an edit operation
+            Utils.SendMessageToDockPane("Capas editables identificadas, comenzando el procesamiento...");
+
             EditOperation mergeOperation = new EditOperation()
             {
                 Name = "Merge Features",
-                ProgressMessage = "Merging polygons...",
-                CancelMessage = "Merge operation canceled.",
-                ErrorMessage = "Error merging polygons",
+                ProgressMessage = "Uniendo polígonos...",
+                CancelMessage = "Operación de unión cancelada.",
+                ErrorMessage = "Error al unir polígonos",
                 SelectModifiedFeatures = true
             };
 
             foreach (var editableLayer in editableLayers)
             {
                 Table featureClass = editableLayer.GetTable();
-
-                // Find the features intersected by the sketch geometry
                 var selectedOIDs = new List<long>();
+
                 using (var rowCursor = featureClass.Search(geometry, SpatialRelationship.Intersects, false))
                 {
                     while (rowCursor.MoveNext())
@@ -92,38 +86,44 @@ namespace ProAppModule2.UI.MapTools
                     }
                 }
 
-                // If there are at least two features to merge
                 if (selectedOIDs.Count >= 2)
                 {
+                    Utils.SendMessageToDockPane($"{selectedOIDs.Count} polígonos seleccionados para la unión.");
                     mergeOperation.Merge(editableLayer, selectedOIDs);
+                }
+                else
+                {
+                    Utils.SendMessageToDockPane("No se encontraron suficientes polígonos para unir.");
                 }
             }
 
-            // Execute the operation
             bool operationResult = mergeOperation.Execute();
+
+            if (operationResult)
+            {
+                Utils.SendMessageToDockPane("Proceso de unión completado con éxito.");
+            }
+            else
+            {
+                Utils.SendMessageToDockPane("Error en el proceso de unión.");
+            }
 
             return Task.FromResult(operationResult);
         }
 
-        /// <summary>
-        /// Method to override the sketch symbol during the sketch operation.
-        /// </summary>
-        /// <returns>If the sketch symbology was successfully changed.</returns>
         protected override async Task<bool> OnSketchModifiedAsync()
         {
-            // Retrieve the current sketch geometry
             Polygon sketchGeometry = await base.GetCurrentSketchAsync() as Polygon;
 
             await QueuedTask.Run(() =>
             {
                 if (sketchGeometry != null && sketchGeometry.PointCount > 3)
                 {
-                    // Update the sketch symbol for the merge operation
                     var symbolReference = base.SketchSymbol;
                     if (symbolReference == null)
                     {
                         var cimPolygonSymbol = SymbolFactory.Instance.ConstructPolygonSymbol(
-                            ColorFactory.Instance.CreateRGBColor(0, 255, 0, 50)); // Semi-transparent green
+                            ColorFactory.Instance.CreateRGBColor(0, 255, 0, 50));
                         base.SketchSymbol = cimPolygonSymbol.MakeSymbolReference();
                     }
                     else
@@ -134,6 +134,7 @@ namespace ProAppModule2.UI.MapTools
                 }
             });
 
+            Utils.SendMessageToDockPane("Dibujando selección, ajuste si es necesario.");
             return true;
         }
     }
