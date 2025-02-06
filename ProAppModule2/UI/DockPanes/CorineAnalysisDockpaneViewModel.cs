@@ -19,7 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Windows.Data;  
+using System.Windows.Data;
 using System.Windows.Input;
 using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Events;
@@ -28,7 +28,7 @@ using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 
-namespace ProAppModule2
+namespace ProAppModule2.UI.DockPanes
 {
     internal class CorineAnalysisDockpaneViewModel : DockPane, INotifyPropertyChanged
     {

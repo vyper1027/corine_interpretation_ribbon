@@ -20,7 +20,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProAppModule2
+namespace ProAppModule2.UI.DockPanes
 {
     internal class CustomDockpaneViewModel : DockPane
     {

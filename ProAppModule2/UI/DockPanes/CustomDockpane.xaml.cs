@@ -14,19 +14,16 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 
-namespace ProAppModule2
+namespace ProAppModule2.UI.DockPanes
 {
     /// <summary>
     /// Interaction logic for CustomDockpaneView.xaml
     /// </summary>
-    public partial class CorineAnalysisDockpaneView : UserControl
+    public partial class CustomDockpaneView : UserControl
     {
-        public CorineAnalysisDockpaneView()
+        public CustomDockpaneView()
         {
             InitializeComponent();
-            this.DataContext = Module1.AttributeViewModel;
-            //this.DataContext = new CorineAnalysisDockpaneView();
-
         }
     }
 }

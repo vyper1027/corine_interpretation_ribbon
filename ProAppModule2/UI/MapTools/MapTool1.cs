@@ -21,6 +21,7 @@ using System.Linq;
 using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using ProAppModule2.UI.DockPanes;
 
 namespace ProAppModule2.UI.MapTools
 {
@@ -54,7 +55,7 @@ namespace ProAppModule2.UI.MapTools
 
                 if (results.Count == 0)
                 {
-                    Utils.SendMessageToDockPane("Seleccione un poligono para comenzar...");
+                    Utils.SendMessageToDockPane("Seleccione uno o varios poligonos para comenzar...");
                 }
 
                 foreach (var kvp in results.ToDictionary())
@@ -64,22 +65,22 @@ namespace ProAppModule2.UI.MapTools
                     if (kvp.Key.Name is layer)
                     {
                         var nc = kvp.Value.Count();
-                        if (nc == 1)
+                        if (nc >= 1 || nc <= 90)
                         {
                             //Project.Current.SetIsEditingEnabledAsync(true);
-                            if (FrameworkApplication.State.Contains("controls_state")) ;
+                            if (FrameworkApplication.State.Contains("controls_state"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_state");
                             }
-                            if (FrameworkApplication.State.Contains("controls_atb")) ;
+                            if (FrameworkApplication.State.Contains("controls_atb"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_atb");
                             }
-                            if (FrameworkApplication.State.Contains("controls_crtng")) ;
+                            if (FrameworkApplication.State.Contains("controls_crtng"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_crtng");
                             }
-                            if (FrameworkApplication.State.Contains("controls_edbox")) ;
+                            if (FrameworkApplication.State.Contains("controls_edbox"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_edbox");
                             }
@@ -101,7 +102,7 @@ namespace ProAppModule2.UI.MapTools
                                     var count = feat.GetFields().Count();
                                     var pointSelection = featureLayer.Select(qf);
                                     List<long> oids = pointSelection.GetObjectIDs().ToList();
-                                    var msj2 = "Ha seleccionado un poligono con codigo de cobertura " + id + ", Continue con el proceso...";//+ " con area de "+area+ " representa la clase "+clase;
+                                    var msj2 = "Ha seleccionado " + nc + " poligonos, Continue con el proceso...";//+ " con area de "+area+ " representa la clase "+clase;
                                     Utils.SendMessageToDockPane(msj2);
                                     //ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show($"{msj2}");
 
@@ -125,15 +126,15 @@ namespace ProAppModule2.UI.MapTools
                             var msj = "En la capa " + kvp.Key.Name + " fueron seleccionados " + nc + " registros, por favor seleccione solo uno si desea aprobar o editar.";
                             //System.Diagnostics.Debug.WriteLine(msj);
                             Utils.SendMessageToDockPane(msj);
-                            if (FrameworkApplication.State.Contains("controls_state")) ;
+                            if (FrameworkApplication.State.Contains("controls_state")) 
                             {
                                 FrameworkApplication.State.Deactivate("controls_state");
                             }
-                            if (FrameworkApplication.State.Contains("controls_atb")) ;
+                            if (FrameworkApplication.State.Contains("controls_atb")) 
                             {
                                 FrameworkApplication.State.Deactivate("controls_atb");
                             }
-                            if (FrameworkApplication.State.Contains("controls_crtng")) ;
+                            if (FrameworkApplication.State.Contains("controls_crtng"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_crtng");
                             }

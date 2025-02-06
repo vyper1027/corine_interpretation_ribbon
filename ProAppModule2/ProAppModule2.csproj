@@ -102,7 +102,4 @@
    <ItemGroup>
      <EditorConfigFiles Remove="C:\Users\ASUS\source\repos\ProAppModule2\ProAppModule2\.editorconfig" />
    </ItemGroup>
-   <ItemGroup>
-     <Folder Include="UI\DockPanes\" />
-   </ItemGroup>
 </Project>

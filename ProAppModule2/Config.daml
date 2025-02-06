@@ -68,11 +68,14 @@
           <button refID="esri_mapping_measureDistanceTool" size="large" />
           <button refID="esri_mapping_exploreTool" size="large" />
         </group>
+		  
         <group id="ComboBoxShowingLayers_Group1" caption="Seleccion" keytip="G0" appearsOnAddInTab="true">
           <!-- host controls within groups -->
           <comboBox refID="ComboBoxShowingLayers_SelectFeature" />
           <tool refID="ProAppModule2_MapTool1" size="large" />
-        </group>
+		  <button refID="ProAppModule2_Clear_Selection_Button" size="large" />			
+		</group>
+		  
         <group id="ProAppModule2_Group2" caption="Revision" appearsOnAddInTab="true">
           <!-- host controls within groups -->
           <button refID="ProAppModule2_Approvefeat" size="large" />
@@ -123,8 +126,9 @@
           <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
           <editBox refID="ProAppModule2_Revision" size="middle" />
         </group>
-		<group id="ProAppModule2_Group9" caption="Resultados CLC" appearsOnAddInTab="true">
+		<group id="ProAppModule2_Group9" caption="Generalizacion CLC" appearsOnAddInTab="true">
 			  <!-- host controls within groups -->
+			<button refID="ProAppModule2_StartCorineAnalysis" size="large" />
 		    <button refID="ProAppModule2_DockpaneCorineAnalysis_ShowButton" size="large" />
 		</group>
 		<group id="ProAppModule2_Group10" caption="Editar Capa Destino" appearsOnAddInTab="true">
@@ -151,10 +155,16 @@
 				Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText /></tooltip>
         </comboBox>
 		  
-        <tool id="ProAppModule2_MapTool1" caption="Seleccion Poligono" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
+        <tool id="ProAppModule2_MapTool1" caption="Seleccionar Poligonos" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Seleccionar Poligono<disabledText /></tooltip>
           <content guid="00c1fa9c-09cd-4620-88d1-620c2feb0935" />
         </tool>
+
+		<button id="ProAppModule2_Clear_Selection_Button" caption="Limpiar Seleccion" className="UI.Buttons.ClearSelection" loadOnClick="true" smallImage="SelectionClearSelected16" largeImage="SelectionClearSelected32">
+			<tooltip heading="Clear selected polygons">
+				Limpiar Seleccion<disabledText />
+			</tooltip>
+		</button>
 		  
         <button id="ProAppModule2_CustomDockpane_ShowButton" caption="Show CustomDockpane" className="CustomDockpane_ShowButton" loadOnClick="true" smallImage="GenericButtonPurple16" largeImage="GenericButtonPurple32">
           <tooltip heading="Show Dockpane">Show Dockpane<disabledText /></tooltip>
@@ -192,8 +202,14 @@
           <tooltip heading="Tooltip Heading">
 				Calcular area poligonos seleccionados<disabledText /></tooltip>
         </button>
+
+		<button id="ProAppModule2_StartCorineAnalysis" caption="Analisis" className="" loadOnClick="true" smallImage="ValidateExtent16" largeImage="ValidateExtent32">
+			<tooltip heading="Control de calidad CLC">
+				Generalizacion CLC<disabledText />
+			</tooltip>
+		</button>  
 		  
-		<button id="ProAppModule2_DockpaneCorineAnalysis_ShowButton" caption="Resultados CLC" className="BookmarkDockpane_ShowButton" loadOnClick="true" smallImage="ContentsWindowShow16" largeImage="ContentsWindowShow32">
+		<button id="ProAppModule2_DockpaneCorineAnalysis_ShowButton" caption="Resultados" className="UI.DockPanes.BookmarkDockpane_ShowButton" loadOnClick="true" smallImage="ContentsWindowShow16" largeImage="ContentsWindowShow32">
 			<tooltip heading="Show Dockpane">
 			    Resultados CLC<disabledText />
 		    </tooltip>
@@ -222,11 +238,11 @@
 	  </controls>
 		
       <dockPanes>
-        <dockPane id="ProAppModule2_CustomDockpane" caption="Atributos Poligono Seleccionado" className="CustomDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
-            <content className="CustomDockpaneView" />
+        <dockPane id="ProAppModule2_CustomDockpane" caption="Atributos Poligono Seleccionado" className="UI.DockPanes.CustomDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
+            <content className="UI.DockPanes.CustomDockpaneView" />
         </dockPane>
-		<dockPane id="ProAppModule2_Corine_Analysis_DockPane" className="CorineAnalysisDockpaneViewModel" caption="Resultados e Info">
-		    <content className="CorineAnalysisDockpaneView" />
+		<dockPane id="ProAppModule2_Corine_Analysis_DockPane" className="UI.DockPanes.CorineAnalysisDockpaneViewModel" caption="Resultados e Info">
+		    <content className="UI.DockPanes.CorineAnalysisDockpaneView" />
 		</dockPane>
       </dockPanes>
     </insertModule>

@@ -25,6 +25,7 @@ using System.Windows.Input;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using System.Text.RegularExpressions;
+using ProAppModule2.UI.DockPanes;
 
 namespace ProAppModule2
 {
@@ -184,7 +185,7 @@ namespace ProAppModule2
         /// </summary>
         /// <param name="layerType">Tipo de capa: "vectores" o "corine"</param>
         /// <returns>FeatureLayer encontrada o null si no existe.</returns>
-        public static Task<FeatureLayer> GetDynamicLayer(string layerType)
+        /*public static Task<FeatureLayer> GetDynamicLayer(string layerType)
         {
             return QueuedTask.Run(() =>
             {
@@ -202,7 +203,45 @@ namespace ProAppModule2
 
                 return layers.FirstOrDefault(fl => Regex.IsMatch(fl.Name, pattern));
             });
+        }*/
+        public static Task<FeatureLayer> GetDynamicLayer(string layerType)
+        {
+            return QueuedTask.Run(() =>
+            {
+                // Obtener todos los panes de mapa abiertos
+                var mapPanes = FrameworkApplication.Panes.OfType<IMapPane>().ToList();
+                if (mapPanes.Count == 0) return null;
+
+                // Definir el patrón de búsqueda para las capas según el tipo
+                string pattern = layerType switch
+                {
+                    "vectoresDeCambio" => @"^Vectores_Cambios_\d+_\d+$",
+                    "capaCorine" => @"^Cobertura_Corine_\d{4}$",
+                    _ => null
+                };
+
+                if (pattern == null) return null;
+
+                // Determinar qué ventana de mapa debe usarse
+                IMapPane targetPane = null;
+
+                if (layerType == "vectoresDeCambio")
+                {
+                    targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana1"));
+                }
+                else if (layerType == "capaCorine")
+                {
+                    targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana2"));
+                }
+
+                if (targetPane == null || targetPane.MapView == null) return null;
+
+                // Buscar la capa en la ventana seleccionada
+                var layers = targetPane.MapView.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>();
+                return layers.FirstOrDefault(fl => Regex.IsMatch(fl.Name, pattern));
+            });
         }
+
 
     }
 }
