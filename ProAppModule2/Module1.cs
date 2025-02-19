@@ -66,10 +66,6 @@ namespace ProAppModule2
         /// Called by Framework when ArcGIS Pro is closing
         /// </summary>
         /// <returns>False to prevent Pro from closing, otherwise True</returns>
-        /// <summary>
-        /// Called by Framework when ArcGIS Pro is closing
-        /// </summary>
-        /// <returns>False to prevent Pro from closing, otherwise True</returns>
         protected override bool CanUnload()
         {
             //TODO - add your business logic
@@ -77,6 +73,30 @@ namespace ProAppModule2
             return true;
         }
 
+        /// <summary>
+        /// Generic implementation of ExecuteCommand to allow calls to
+        /// <see cref="FrameworkApplication.ExecuteCommand"/> to execute commands in
+        /// your Module.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        protected override Func<Task> ExecuteCommand(string id)
+        {
+
+            //TODO: replace generic implementation with custom logic
+            //etc as needed for your Module
+            var command = FrameworkApplication.GetPlugInWrapper(id) as ICommand;
+            if (command == null)
+                return () => Task.FromResult(0);
+            if (!command.CanExecute(null))
+                return () => Task.FromResult(0);
+
+            return () =>
+            {
+                command.Execute(null); // if it is a tool, execute will set current tool
+                return Task.FromResult(0);
+            };
+        }
         #endregion Overrides
 
         #region Toggle State

@@ -165,7 +165,7 @@ namespace ProAppModule2
 
             if (dockPane == null)
             {
-                ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("DockPane no encontrado. Verifique el registro del DockPane en config.daml.", "Error");
+                //ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("DockPane no encontrado. Verifique el registro del DockPane en config.daml.", "Error");
                 return;
             }
 
@@ -242,6 +242,27 @@ namespace ProAppModule2
             });
         }
 
+        /// <summary>
+        /// Obtiene la capa de topología "Cobertura_Corine_Topologia" desde la Ventana 2 del mapa activo.
+        /// </summary>
+        public static async Task<TopologyLayer> GetTopologyLayer()
+        {
+            return await QueuedTask.Run(() =>
+            {
+                // Obtener todas las ventanas de mapa abiertas
+                var mapPanes = FrameworkApplication.Panes.OfType<IMapPane>().ToList();
+                if (mapPanes.Count == 0) return null;
+
+                // Buscar la ventana 2 donde debería estar la capa de topología
+                IMapPane targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana2"));
+
+                if (targetPane == null || targetPane.MapView == null) return null;
+
+                // Obtener todas las capas y buscar la de topología
+                var layers = targetPane.MapView.Map.GetLayersAsFlattenedList();
+                return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name == "Cobertura_Corine_Topologia");
+            });
+        }
 
     }
 }

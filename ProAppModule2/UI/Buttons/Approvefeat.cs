@@ -17,15 +17,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ProAppModule2.Geoprocessing;
+using GeoprocessingExecuteAsync;
+
 
 namespace ProAppModule2.UI.Buttons
 {
     internal class Approvefeat : Button
     {
-        private long selectedFeatureID;
-        protected override void OnClick()
-        {            
+        private readonly CorineAnalysisService _analysisService;
+
+        /// <summary>
+        /// Constructor de la clase, inicializa el servicio de análisis
+        /// </summary>
+        public Approvefeat()
+        {
+            _analysisService = new CorineAnalysisService();
+        }
+        protected override void OnClick()        {
+            
             ApproveValues();
             
             //FeatureUtils.InsertGeometryToCorineLayer();
@@ -69,7 +78,7 @@ namespace ProAppModule2.UI.Buttons
 
                 await Project.Current.SetIsEditingEnabledAsync(true);
 
-                selectedFeatureID = featSelectionOIDs.ToList()[0];
+                //selectedFeatureID = featSelectionOIDs.ToList()[0];
                 // Get the name of the attribute to update, and the value to set:
                 string attributename = "Estado";
                 string setvalue = "Aprobado";
@@ -105,7 +114,17 @@ namespace ProAppModule2.UI.Buttons
 
                         var targetLayer = await Utils.GetDynamicLayer("capaCorine");
 
+                        // ✅ Verificamos si el CheckBox de Validar Topología está activado
+                        bool isTopologyValidationEnabled = FrameworkApplication.State.Contains("Control_Topology_cond");                        
+
                         await InsertSelectedFeaturesIntoCorine(featLayer, targetLayer, featSelectionOIDs);
+                        await ClipInsertedFeatures(targetLayer, featSelectionOIDs);
+
+                        if (isTopologyValidationEnabled)
+                        {
+                            Utils.SendMessageToDockPane("🔍 Ejecutando validación de topología antes de insertar los polígonos...");
+                            await CorineAnalysisService.ValidateCurrentExtentTopology();
+                        }
                     }
                     else
                     {
@@ -171,11 +190,11 @@ namespace ProAppModule2.UI.Buttons
                             var success = createFeatures.Execute();
                             if (!success)
                             {
-                                Utils.SendMessageToDockPane("Error al copiar los polígonos.");
+                                Utils.SendMessageToDockPane("Error al copiar los polígonos en la capa destino.");
                             }
                             else
                             {
-                                Utils.SendMessageToDockPane("Polígonos copiados exitosamente a capa Corine.");
+                                Utils.SendMessageToDockPane("Polígonos copiados exitosamente a capa Corine destino. \n Proceda a llenar los atributos faltantes...");
                             }
                         }
                     }
@@ -187,6 +206,83 @@ namespace ProAppModule2.UI.Buttons
             });
         }
 
+        /// <summary>
+        /// Recorta los polígonos insertados para evitar superposición (Overlap)
+        /// </summary>
+        /// <summary>
+        /// Recorta solo los features insertados para evitar superposición con la capa de destino.
+        /// </summary>
+        public async Task ClipInsertedFeatures(FeatureLayer targetLayer, IReadOnlyList<long> oids)
+        {
+            await QueuedTask.Run(() =>
+            {
+                try
+                {
+                    using (var targetTable = targetLayer.GetTable())
+                    using (var rowCursor = targetTable.Search(new QueryFilter { ObjectIDs = oids }, false))
+                    {
+                        var editOp = new EditOperation() { Name = "Recortar nuevas geometrías superpuestas" };
+
+                        while (rowCursor.MoveNext())
+                        {
+                            using (var row = rowCursor.Current)
+                            {
+                                Geometry newGeometry = row["SHAPE"] as Geometry;
+                                if (newGeometry == null) continue;
+
+                                // 📌 Obtener todas las geometrías existentes en la capa de destino
+                                Geometry existingGeometries = null;
+                                using (var targetCursor = targetTable.Search(null, false))
+                                {
+                                    while (targetCursor.MoveNext())
+                                    {
+                                        using (var targetFeature = targetCursor.Current as Feature)
+                                        {
+                                            Geometry existingGeometry = targetFeature.GetShape();
+                                            if (existingGeometry != null && !oids.Contains(targetFeature.GetObjectID()))
+                                            {
+                                                existingGeometries = existingGeometries == null
+                                                    ? existingGeometry
+                                                    : GeometryEngine.Instance.Union(existingGeometries, existingGeometry);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // 📌 Si hay geometrías existentes, aplicar el recorte (Clip)
+                                if (existingGeometries != null)
+                                {
+                                    Geometry clippedGeometry = GeometryEngine.Instance.Difference(newGeometry, existingGeometries);
+
+                                    if (clippedGeometry != null && !clippedGeometry.IsEmpty)
+                                    {
+                                        editOp.Modify(targetTable, row.GetObjectID(), new Dictionary<string, object> { { "SHAPE", clippedGeometry } });
+                                    }
+                                }
+                            }
+                        }
+
+                        // Ejecutar la operación de recorte
+                        if (!editOp.IsEmpty)
+                        {
+                            var success = editOp.Execute();
+                            if (!success)
+                            {
+                                Utils.SendMessageToDockPane("❌ Error al recortar los polígonos insertados.");
+                            }
+                            else
+                            {
+                                Utils.SendMessageToDockPane("✅ Recorte completado con éxito. No hay superposición.");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Utils.SendMessageToDockPane($"❌ Error en el recorte: {ex.Message}");
+                }
+            });
+        }
 
     }
 }

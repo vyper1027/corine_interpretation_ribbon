@@ -27,6 +27,7 @@ using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
+using GeoprocessingExecuteAsync;
 
 namespace ProAppModule2.UI.DockPanes
 {
@@ -48,6 +49,7 @@ namespace ProAppModule2.UI.DockPanes
         private readonly ObservableCollection<Map> _listOfMaps = new ObservableCollection<Map>();
         private readonly ObservableCollection<Bookmark> _listOfBookmarks = new ObservableCollection<Bookmark>();
 
+        //public ICommand ExecuteAnalysisCommand { get; }
 
 
         private readonly ReadOnlyObservableCollection<Map> _readOnlyListOfMaps;
@@ -55,8 +57,118 @@ namespace ProAppModule2.UI.DockPanes
 
         private Bookmark _selectedBookmark;
         private Map _selectedMap;
+        
+        private bool _validateTopology;
+        private bool _findCluster;
+        private bool _findSmallPolygons;
+        private bool _calculatePriority;
 
+        private readonly CorineAnalysisService _analysisService;
         private string _statusMessage;
+
+        public bool ValidateTopology
+        {
+            get => _validateTopology;
+            set
+            {
+                _validateTopology = value;
+                if (_validateTopology)
+                {
+                    FindCluster = false;
+                    FindSmallPolygons = false;
+                }
+                OnPropertyChanged(nameof(ValidateTopology));
+            }
+        }
+
+        public bool FindCluster
+        {
+            get => _findCluster;
+            set
+            {
+                _findCluster = value;
+                if (_findCluster)
+                {
+                    ValidateTopology = false;
+                    FindSmallPolygons = false;
+                }
+                OnPropertyChanged(nameof(FindCluster));
+            }
+        }
+
+        public bool FindSmallPolygons
+        {
+            get => _findSmallPolygons;
+            set
+            {
+                _findSmallPolygons = value;
+                if (_findSmallPolygons)
+                {
+                    ValidateTopology = false;
+                    FindCluster = false;
+                }
+                OnPropertyChanged(nameof(FindSmallPolygons));
+            }
+        }
+
+        public bool CalculatePriority
+        {
+            get => _calculatePriority;
+            set
+            {
+                _calculatePriority = value;
+                if (_calculatePriority)
+                {
+                    ValidateTopology = false;
+                    FindCluster = false;
+                }
+                OnPropertyChanged(nameof(FindSmallPolygons));
+            }
+        }
+
+        public ICommand ExecuteAnalysisCommand { get; }
+
+        
+
+        private async Task ExecuteAnalysis()
+        {
+            if (ValidateTopology)
+            {
+                StatusMessage = "Validando topología...";
+                OnPropertyChanged(nameof(StatusMessage));
+                //await _analysisService.ValidateTopology();
+                StatusMessage = "Validación de topología completada.";
+            }
+            else if (FindCluster)
+            {
+                StatusMessage = "Buscando clústeres...";
+                OnPropertyChanged(nameof(StatusMessage));
+                await _analysisService.FindCluster();
+                StatusMessage = "Análisis de clúster completado.";
+            }
+            else if (FindSmallPolygons)
+            {
+                StatusMessage = "Buscando polígonos menores a 5ha...";
+                OnPropertyChanged(nameof(StatusMessage));
+                await _analysisService.FindSmallPolygons();
+                StatusMessage = "Análisis de polígonos menores a 5ha completado.";
+            }
+            else if (CalculatePriority)
+            {
+                StatusMessage = "Calculando prioridades...";
+                OnPropertyChanged(nameof(StatusMessage));
+                await _analysisService.CalculatePriority();
+                StatusMessage = "Calculo de prioridad completado.";
+            }
+            else
+            {
+                StatusMessage = "Seleccione un análisis antes de ejecutar.";
+            }
+
+            OnPropertyChanged(nameof(StatusMessage));
+        }
+
+        //public event PropertyChangedEventHandler PropertyChanged;           
 
         private ICommand _retrieveMapsCommand;
 
@@ -141,9 +253,9 @@ namespace ProAppModule2.UI.DockPanes
                 });
                 System.Diagnostics.Debug.WriteLine("selected map opened and activated map");
                 // no need to await
-#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 UpdateBookmarks(_selectedMap);
-#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+                #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                 System.Diagnostics.Debug.WriteLine("updated bookmarks");
             }
         }
@@ -164,6 +276,8 @@ namespace ProAppModule2.UI.DockPanes
             _readOnlyListOfBookmarks = new ReadOnlyObservableCollection<Bookmark>(_listOfBookmarks);
             BindingOperations.EnableCollectionSynchronization(_readOnlyListOfMaps, _lockMapCollections);
             BindingOperations.EnableCollectionSynchronization(_readOnlyListOfBookmarks, _lockBookmarkCollections);
+            _analysisService = new CorineAnalysisService();
+            ExecuteAnalysisCommand = new RelayCommand(async () => await ExecuteAnalysis());
 
             // set up the command to retrieve the maps
             _retrieveMapsCommand = new RelayCommand(() => RetrieveMaps(), () => true);

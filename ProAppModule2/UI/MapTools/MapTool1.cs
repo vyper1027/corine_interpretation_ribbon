@@ -72,14 +72,17 @@ namespace ProAppModule2.UI.MapTools
                             {
                                 FrameworkApplication.State.Deactivate("controls_state");
                             }
+
                             if (FrameworkApplication.State.Contains("controls_atb"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_atb");
                             }
+
                             if (FrameworkApplication.State.Contains("controls_crtng"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_crtng");
                             }
+
                             if (FrameworkApplication.State.Contains("controls_edbox"))
                             {
                                 FrameworkApplication.State.Deactivate("controls_edbox");
