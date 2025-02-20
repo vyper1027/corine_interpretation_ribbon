@@ -76,6 +76,7 @@ namespace ProAppModule2.UI.DockPanes
                 {
                     FindCluster = false;
                     FindSmallPolygons = false;
+                    CalculatePriority = false;
                 }
                 OnPropertyChanged(nameof(ValidateTopology));
             }
@@ -91,6 +92,7 @@ namespace ProAppModule2.UI.DockPanes
                 {
                     ValidateTopology = false;
                     FindSmallPolygons = false;
+                    CalculatePriority = false;
                 }
                 OnPropertyChanged(nameof(FindCluster));
             }
@@ -106,6 +108,7 @@ namespace ProAppModule2.UI.DockPanes
                 {
                     ValidateTopology = false;
                     FindCluster = false;
+                    CalculatePriority = false;
                 }
                 OnPropertyChanged(nameof(FindSmallPolygons));
             }
@@ -121,23 +124,24 @@ namespace ProAppModule2.UI.DockPanes
                 {
                     ValidateTopology = false;
                     FindCluster = false;
+                    FindSmallPolygons = false;
                 }
-                OnPropertyChanged(nameof(FindSmallPolygons));
+                OnPropertyChanged(nameof(CalculatePriority));
             }
         }
 
         public ICommand ExecuteAnalysisCommand { get; }
 
-        
+
 
         private async Task ExecuteAnalysis()
         {
             if (ValidateTopology)
             {
                 StatusMessage = "Validando topología...";
-                OnPropertyChanged(nameof(StatusMessage));
-                //await _analysisService.ValidateTopology();
-                StatusMessage = "Validación de topología completada.";
+                OnPropertyChanged(nameof(StatusMessage));                
+                await CorineAnalysisService.ValidateAllLayerTopology();
+              
             }
             else if (FindCluster)
             {
@@ -158,15 +162,16 @@ namespace ProAppModule2.UI.DockPanes
                 StatusMessage = "Calculando prioridades...";
                 OnPropertyChanged(nameof(StatusMessage));
                 await _analysisService.CalculatePriority();
-                StatusMessage = "Calculo de prioridad completado.";
+                StatusMessage = "Cálculo de prioridad completado.";
             }
             else
             {
-                StatusMessage = "Seleccione un análisis antes de ejecutar.";
+                StatusMessage = "⚠ Seleccione un análisis antes de ejecutar.";
             }
 
             OnPropertyChanged(nameof(StatusMessage));
         }
+
 
         //public event PropertyChangedEventHandler PropertyChanged;           
 

@@ -100,7 +100,7 @@ namespace ProAppModule2.UI.Buttons
                         var editOp = new EditOperation();
                         editOp.Name = "Edit " + featLayer.Name + ", " + Convert.ToString(featSelectionOIDs.Count) + " records.";
                         editOp.Modify(inspector);
-                        editOp.ExecuteAsync();
+                        await editOp.ExecuteAsync();
 
                         Utils.SendMessageToDockPane("Actualizacion Completada.", true);
                         Utils.SendMessageToDockPane("El registro fue eliminado", true);

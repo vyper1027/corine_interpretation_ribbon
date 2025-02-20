@@ -30,14 +30,16 @@ public static class LayerValidationService
                 using (FeatureClassDefinition definition = (FeatureClassDefinition)table.GetDefinition())
                 {
                     // ✅ 2. Validar conformidad de atributos (estructura de la capa)
-                    string[] requiredFields = { "Codigo", "Insumo", "Apoyo", "Confiabilidad" };
+                    string[] requiredFields = { "codigo", "insumo", "apoyo", "confiabili" };
                     Dictionary<string, FieldType> expectedTypes = new Dictionary<string, FieldType>
                     {
-                        { "Codigo", FieldType.SmallInteger },
-                        { "Insumo", FieldType.String },
-                        { "Apoyo", FieldType.String },
-                        { "Confiabilidad", FieldType.String }
+                        { "codigo", FieldType.Integer },
+                        { "insumo", FieldType.String },
+                        { "apoyo", FieldType.String },
+                        { "confiabili", FieldType.String }
                     };
+
+                    Utils.SendMessageToDockPane("");
 
                     foreach (var field in requiredFields)
                     {
@@ -63,9 +65,9 @@ public static class LayerValidationService
                 return;
             }
 
-            if (sr.Name.Contains("MAGNA-SIRGAS"))
+            if (sr.Wkid == 9377)
             {
-                Utils.SendMessageToDockPane("✅ Sistema de coordenadas correcto: MAGNA-SIRGAS.", true);
+                Utils.SendMessageToDockPane("✅ Sistema de coordenadas correcto: EPSG 9377", true);
             }
             else if (sr.Name.Contains("Transverse Mercator") && sr.VcsWkid == 4686)
             {
@@ -73,10 +75,10 @@ public static class LayerValidationService
             }
             else
             {
-                Utils.SendMessageToDockPane($"❌ El sistema de coordenadas es incorrecto: {sr.Name}.", true);
+                Utils.SendMessageToDockPane($"❌ El sistema de coordenadas es incorrecto: {sr.Wkid}. Debe ser EPSG 9377", true);
             }
 
-            Utils.SendMessageToDockPane("✅ Validación de conformidad completada.", true);
+            Utils.SendMessageToDockPane("✅ Validación de conformidad del archivo completada.", true);
         });
     }
 }

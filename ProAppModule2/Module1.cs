@@ -119,8 +119,7 @@ namespace ProAppModule2
 
         #endregion Toggle State
 
-        #region Business Logic
-        private ModValueToSetcl2018 _attributEditBox = null;
+        #region Business Logic        
         public ModValueToSetcl2018 ModValueToSetcl20181
         {
             get; set;

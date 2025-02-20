@@ -21,8 +21,7 @@ using System.Threading.Tasks;
 namespace ProAppModule2.UI.Buttons
 {
     internal class Editgeo : Button
-    {
-        private bool isButtonVisible = true;
+    {        
         protected override void OnClick()
         {
 

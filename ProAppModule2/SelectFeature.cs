@@ -27,9 +27,6 @@ namespace ProAppModule2
     /// </summary>
     internal class SelectFeature : ComboBox
     {
-
-        private bool _isInitialized;
-
         /// <summary>
         /// Combo Box constructor
         /// </summary>

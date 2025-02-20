@@ -15,12 +15,12 @@ namespace GeoprocessingExecuteAsync
         /// <summary>
         /// Ejecuta la validación de topología de la capa Corine (Capa destino)
         /// </summary>
-        public static async Task ValidateTopology()
+        public static async Task ValidateAllLayerTopology()
         {
             await QueuedTask.Run(async () =>
             {
-                // Obtener la capa de topología en el mapa activo
-                var topologyLayer = await Utils.GetDynamicLayer("capaCorine");
+                // ✅ Obtener la capa de topología
+                var topologyLayer = await Utils.GetTopologyLayer();
 
                 if (topologyLayer == null)
                 {
@@ -28,24 +28,38 @@ namespace GeoprocessingExecuteAsync
                     return;
                 }
 
-                Utils.SendMessageToDockPane($"✅ Ejecutando validación de topología en: {topologyLayer.Name}");
+                Utils.SendMessageToDockPane($"✅ Ejecutando validación de topología en toda la capa: {topologyLayer.Name}");
 
-                // Parámetros para la herramienta de geoprocesamiento
-                var parameters = Geoprocessing.MakeValueArray(topologyLayer);
-
-                // Ejecutar la herramienta de geoprocesamiento "ValidateTopology"
-                var gpResult = await Geoprocessing.ExecuteToolAsync("management.ValidateTopology", parameters);
-
-                if (gpResult.IsFailed)
+                // ✅ Obtener el objeto de Topology
+                Topology topology = topologyLayer.GetTopology();
+                if (topology == null)
                 {
-                    Utils.SendMessageToDockPane($"❌ Error en la validación de topología: {gpResult.Messages}");
+                    Utils.SendMessageToDockPane("❌ No se pudo obtener la topología desde el layer.");
+                    return;
+                }
+
+                // ✅ Guardar cambios antes de validar
+                if (Project.Current.HasEdits)
+                {
+                    Utils.SendMessageToDockPane("⚠ Hay ediciones pendientes. Guardando cambios...");
+                    await Project.Current.SaveEditsAsync();
+                }
+
+                // 🔍 **Validar la topología en toda la capa**
+                ValidationResult result = topology.Validate(new ValidationDescription(topology.GetExtent()));
+
+                // ✅ Verificar si hay errores topológicos
+                if (result.AffectedArea != null && !result.AffectedArea.IsEmpty)
+                {
+                    Utils.SendMessageToDockPane($"⚠ Se encontraron errores de topología en la capa: {result.AffectedArea.ToJson()}");
                 }
                 else
                 {
-                    Utils.SendMessageToDockPane("✅ Validación de topología completada con éxito.");
+                    Utils.SendMessageToDockPane("✅ No se encontraron errores de topología en la capa.");
                 }
             });
         }
+
 
         public static async Task ValidateCurrentExtentTopology()
         {
