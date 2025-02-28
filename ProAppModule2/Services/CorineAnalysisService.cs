@@ -45,8 +45,10 @@ namespace GeoprocessingExecuteAsync
                     await Project.Current.SaveEditsAsync();
                 }
 
+                Envelope fullExtent = topology.GetExtent();
+
                 // 🔍 **Validar la topología en toda la capa**
-                ValidationResult result = topology.Validate(new ValidationDescription(topology.GetExtent()));
+                ValidationResult result = topology.Validate(new ValidationDescription(fullExtent));
 
                 // ✅ Verificar si hay errores topológicos
                 if (result.AffectedArea != null && !result.AffectedArea.IsEmpty)
@@ -124,7 +126,7 @@ namespace GeoprocessingExecuteAsync
 
                 if (result.AffectedArea != null && !result.AffectedArea.IsEmpty)
                 {
-                    Utils.SendMessageToDockPane($"⚠ Se encontraron errores de topología en el área: {result.AffectedArea.ToJson()}");
+                    Utils.SendMessageToDockPane("⚠ Se encontraron errores de topología en el área");
                 }
                 else
                 {
@@ -192,14 +194,30 @@ namespace GeoprocessingExecuteAsync
             {
                 Utils.SendMessageToDockPane("🔍 Calculando prioridad...");
 
-                // Parámetros ficticios, reemplazar con los reales
-                var parameters = Geoprocessing.MakeValueArray("NombreDeTuCapa", "Priority_Field");
+                var inputLayer = Utils.GetDynamicLayer("capaCorine");
+                string outputTable = "PolygonNeighbors_Table";
+                string priorityField = "Priority_Field";
 
-                var gpResult = await Geoprocessing.ExecuteToolAsync("analysis.CalculateField", parameters);
+                // Calcular los vecinos de los polígonos
+                var neighborParams = Geoprocessing.MakeValueArray(inputLayer, outputTable);
+                var neighborResult = await Geoprocessing.ExecuteToolAsync("analysis.PolygonNeighbors", neighborParams);
 
-                if (gpResult.IsFailed)
+                if (neighborResult.IsFailed)
                 {
-                    Utils.SendMessageToDockPane($"❌ Error en el cálculo de prioridad: {gpResult.Messages}");
+                    Utils.SendMessageToDockPane($"❌ Error al calcular vecinos: {neighborResult.Messages}");
+                    return;
+                }
+
+                // Aquí podrías procesar la tabla resultante (outputTable) si es necesario antes de calcular el campo
+                // Por simplicidad, se asume que el cálculo de prioridad se hace directamente sobre la capa
+
+                // Calcular el campo de prioridad
+                var fieldParams = Geoprocessing.MakeValueArray(inputLayer, priorityField);
+                var fieldResult = await Geoprocessing.ExecuteToolAsync("analysis.CalculateField", fieldParams);
+
+                if (fieldResult.IsFailed)
+                {
+                    Utils.SendMessageToDockPane($"❌ Error en el cálculo de prioridad: {fieldResult.Messages}");
                 }
                 else
                 {
@@ -207,6 +225,7 @@ namespace GeoprocessingExecuteAsync
                 }
             });
         }
+
     }
 }
 

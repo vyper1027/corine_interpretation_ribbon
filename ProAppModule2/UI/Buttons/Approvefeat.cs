@@ -171,8 +171,8 @@ namespace ProAppModule2.UI.Buttons
                         {
                             using (var row = rowCursor.Current)
                             {
-                                var shape = row["SHAPE"] as Geometry; // Obtener la geometría de la entidad
-                                var codigo = row["Codigo_cobertura"]; // Obtener equivalencia del código de cobertura
+                                var shape = row["SHAPE"] as Geometry; 
+                                var codigo = row["C2020_clc"]; 
 
                                 // 📌 Diccionario con atributos para la nueva entidad
                                 var attributes = new Dictionary<string, object>
@@ -180,9 +180,9 @@ namespace ProAppModule2.UI.Buttons
                             { "SHAPE", shape },
                             { "apoyo", null },
                             { "area_ha", null },
-                            { "cambio", null },
+                            { "cambio", 2 },
                             { "codigo", codigo },
-                            { "confiabilidad", null },
+                            { "confiabilidad", null },                                   
                             { "insumo", null },
                             { "leyenda", null },
                             { "nivel_1", null },
@@ -190,7 +190,8 @@ namespace ProAppModule2.UI.Buttons
                             { "nivel_3", null },
                             { "nivel_4", null },
                             { "nivel_5", null },
-                            { "nivel_6", null }
+                            { "nivel_6", null },
+                            { "h_aprob", DateTime.Now }
                         };
 
                                 // 📌 Crear la entidad en la capa destino y capturar el RowToken

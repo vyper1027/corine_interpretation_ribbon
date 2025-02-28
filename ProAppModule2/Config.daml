@@ -139,7 +139,7 @@
         </group>
 		<group id="ProAppModule2_Group9" caption="Generalizacion CLC" appearsOnAddInTab="true">
 			  <!-- host controls within groups -->
-			<button refID="ProAppModule2_StartCorineAnalysis" size="large" />
+			<!--<button refID="ProAppModule2_StartCorineAnalysis" size="large" />-->
 		    <button refID="ProAppModule2_DockpaneCorineAnalysis_ShowButton" size="large" />
 		</group>
 		<group id="ProAppModule2_Group10" caption="Editar Capa" appearsOnAddInTab="true">
@@ -229,11 +229,11 @@
 				Calcular area poligonos seleccionados<disabledText /></tooltip>
         </button>
 
-		<button id="ProAppModule2_StartCorineAnalysis" caption="Analisis" className="" loadOnClick="true" smallImage="ValidateExtent16" largeImage="ValidateExtent32">
+		<!--<button id="ProAppModule2_StartCorineAnalysis" caption="Analisis" className="" loadOnClick="true" smallImage="ValidateExtent16" largeImage="ValidateExtent32">
 			<tooltip heading="Control de calidad CLC">
 				Generalizacion CLC<disabledText />
 			</tooltip>
-		</button>  
+		</button>-->  
 		  
 		<button id="ProAppModule2_DockpaneCorineAnalysis_ShowButton" caption="Resultados" className="UI.DockPanes.BookmarkDockpane_ShowButton" loadOnClick="true" smallImage="ContentsWindowShow16" largeImage="ContentsWindowShow32">
 			<tooltip heading="Show Dockpane">
@@ -266,8 +266,6 @@
 				Conformidad del archivo<disabledText />
 			</tooltip>
 		</button>
-		  
-
 	  </controls>
 		
       <dockPanes>
