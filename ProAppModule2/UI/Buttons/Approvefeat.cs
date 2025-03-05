@@ -176,23 +176,15 @@ namespace ProAppModule2.UI.Buttons
 
                                 // 📌 Diccionario con atributos para la nueva entidad
                                 var attributes = new Dictionary<string, object>
-                        {
-                            { "SHAPE", shape },
-                            { "apoyo", null },
-                            { "area_ha", null },
-                            { "cambio", 2 },
-                            { "codigo", codigo },
-                            { "confiabilidad", null },                                   
-                            { "insumo", null },
-                            { "leyenda", null },
-                            { "nivel_1", null },
-                            { "nivel_2", null },
-                            { "nivel_3", null },
-                            { "nivel_4", null },
-                            { "nivel_5", null },
-                            { "nivel_6", null },
-                            { "h_aprob", DateTime.Now }
-                        };
+                                {
+                                    { "SHAPE", shape },                            
+                                    { "area_ha", null },
+                                    { "cambio", 2 },
+                                    { "codigo", codigo },
+                                    { "confiabilidad", null },                                   
+                                    { "insumo", "Sentinel" },                                                    
+                                    { "h_aprob", DateTime.Now }
+                                };
 
                                 // 📌 Crear la entidad en la capa destino y capturar el RowToken
                                 RowToken newRow = createFeatures.Create(targetTable, attributes);

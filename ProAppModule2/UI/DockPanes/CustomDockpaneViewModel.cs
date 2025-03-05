@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 namespace ProAppModule2.UI.DockPanes
 {
@@ -29,6 +30,8 @@ namespace ProAppModule2.UI.DockPanes
         private System.Windows.Controls.UserControl _inspectorView = null;
         private Inspector _attributeInspector;
         private Geometry _geometry;
+        public ICommand SaveCommand { get; private set; }
+
 
         protected CustomDockpaneViewModel()
         {
@@ -45,6 +48,10 @@ namespace ProAppModule2.UI.DockPanes
             // get viewmodel and view for the inspector control
             InspectorViewModel = icontrol.Item1;
             InspectorView = icontrol.Item2;
+
+            SaveCommand = new RelayCommand(async () => await GuardarCambios(), () => _attributeInspector.HasAttributes);
+
+
         }
         #region Properties
         public Inspector AttributeInspector
@@ -80,6 +87,36 @@ namespace ProAppModule2.UI.DockPanes
             }
         }
 
+        private async Task GuardarCambios()
+        {
+            var ValidEdits = _attributeInspector.HasValidEdits;
+            if (ValidEdits == false || ValidEdits == null)
+            {
+                Utils.SendMessageToDockPane("No hay cambios que guardar o lo atributos editados no son validos.");
+                return;
+            }
+
+            await QueuedTask.Run(() =>
+            {
+                var op = new EditOperation
+                {
+                    Name = "Guardar Edición de Atributos",
+                    ShowProgressor = true
+                };
+
+                op.Modify(_attributeInspector);
+                if (op.Execute())
+                {
+                    Utils.SendMessageToDockPane($"Los cambios han sido guardados correctamente.\nOID { _attributeInspector.ObjectID }");
+                }
+                else
+                {
+                    Utils.SendMessageToDockPane("Error al guardar los cambios.");
+                }
+            });
+        }
+
+
         public Geometry Geometry
         {
             get => _geometry;
@@ -101,7 +138,7 @@ namespace ProAppModule2.UI.DockPanes
         /// <summary>
         /// Text shown near the top of the DockPane.
         /// </summary>
-        private string _heading = "Custom Attribute Dockpane";
+        private string _heading = "Seleccione un poligono para ver sus atributos";
         public string Heading
         {
             get { return _heading; }
@@ -110,6 +147,7 @@ namespace ProAppModule2.UI.DockPanes
                 SetProperty(ref _heading, value, () => Heading);
             }
         }
+
     }
 
     /// <summary>

@@ -9,6 +9,7 @@ using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Internal.Mapping.CommonControls;
 using ArcGIS.Desktop.KnowledgeGraph;
 using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
@@ -31,14 +32,25 @@ namespace ProAppModule2.UI.Buttons
                 MessageBox.Show("No MapView currently active. Exiting...", "Info");
                 return;
             }
-            QueuedTask.Run(() =>
+            QueuedTask.Run(async () =>
             {
-
+                var layerName = "";
                 // Get the layer selected in the Contents pane, and prompt if there is none:
-                
+                var map = MapView.Active?.Map;
+                                
+                if (map.Name == "Ventana1")
+                {
+                    var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio");
+                    layerName = layer1?.Name ?? "No se encontro la capa 1";
+
+                } else if (map.Name == "Ventana2")
+                {
+                    var layer2 = await Utils.GetDynamicLayer("capaCorine");
+                    layerName = layer2?.Name ?? "No se encontro la capa 1";
+                }
                 // Check to see if there is a selected feature layer
-                const string layer = "Vectores_Cambios_18_20";
-                var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layer));
+                //const string layer = "Vectores_Cambios_18_20";
+                var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layerName));
 
                 //var featLayer = MapView.Active.GetSelectedLayers().First() as FeatureLayer;
                 if (featLayer == null)
@@ -60,7 +72,7 @@ namespace ProAppModule2.UI.Buttons
                     return;
                 }
 
-                Project.Current.SetIsEditingEnabledAsync(true);
+                await Project.Current.SetIsEditingEnabledAsync(true);
                 Module1.ToggleState("controls_atb");
 
 

@@ -9,6 +9,7 @@ using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Internal.Mapping.CommonControls;
 using ArcGIS.Desktop.KnowledgeGraph;
 using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
@@ -27,10 +28,13 @@ namespace ProAppModule2.UI.Buttons
         {
             try
             {
-                QueuedTask.Run(() =>
+                QueuedTask.Run(async () =>
                 {
-                    const string layerName1 = "Vectores_Cambios_18_20";
-                    const string layerName2 = "cobertura_tierra_2018_BUFFER_Edicion";
+                    var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio");
+                    var layer2 = await Utils.GetDynamicLayer("capaCorine");
+
+                    var layerName1 = layer1?.Name ?? "No se encontro la capa 1";
+                    var layerName2 = layer2?.Name ?? "No se encontro la capa 2";
 
                     var map = MapView.Active?.Map;
                     if (map == null)
