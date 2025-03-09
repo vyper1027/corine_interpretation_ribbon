@@ -13,13 +13,14 @@ namespace ProAppModule2
     {
         public ModValueToSetcl2018()
         {
-            QueuedTask.Run(() =>
-            {                
-                const string layer = "Vectores_Cambios_18_20";
-                var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layer));
-                var featSelectionOIDs = featLayer.GetSelection().GetObjectIDs();
+            QueuedTask.Run(async() =>            {                
+                
+                var layer = await Utils.GetDynamicLayer("vectoresDeCambio");
+                //var layerName = layer?.Name ?? "No se encontro la capa de cambios";
+                //var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layerName));
+                var featSelectionOIDs = layer.GetSelection().GetObjectIDs();
                 var qf = new QueryFilter() { ObjectIDs = featSelectionOIDs };
-                var rowCursor = featLayer.Search(qf);
+                var rowCursor = layer.Search(qf);
                 while (rowCursor.MoveNext())
                 {
                     using (var feat = rowCursor.Current as Feature)

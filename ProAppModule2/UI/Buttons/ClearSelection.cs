@@ -17,6 +17,7 @@ namespace ProAppModule2.UI.Buttons
                 {
                     // Limpiar la selección de todas las capas
                     mapView.Map?.SetSelection(null);
+                    Utils.SendMessageToDockPane("Seleccione un poligono para comenzar...");
                 }
             });
         }

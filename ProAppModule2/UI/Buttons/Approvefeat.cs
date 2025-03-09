@@ -181,7 +181,7 @@ namespace ProAppModule2.UI.Buttons
                                     { "area_ha", null },
                                     { "cambio", 2 },
                                     { "codigo", codigo },
-                                    { "confiabilidad", null },                                   
+                                    { "confiabili", null },                                   
                                     { "insumo", "Sentinel" },                                                    
                                     { "h_aprob", DateTime.Now }
                                 };

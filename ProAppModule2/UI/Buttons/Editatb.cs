@@ -48,8 +48,7 @@ namespace ProAppModule2.UI.Buttons
                     var layer2 = await Utils.GetDynamicLayer("capaCorine");
                     layerName = layer2?.Name ?? "No se encontro la capa 1";
                 }
-                // Check to see if there is a selected feature layer
-                //const string layer = "Vectores_Cambios_18_20";
+                // Check to see if there is a selected feature layer                
                 var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layerName));
 
                 //var featLayer = MapView.Active.GetSelectedLayers().First() as FeatureLayer;
@@ -74,9 +73,6 @@ namespace ProAppModule2.UI.Buttons
 
                 await Project.Current.SetIsEditingEnabledAsync(true);
                 Module1.ToggleState("controls_atb");
-
-
-
             });
         }
     }

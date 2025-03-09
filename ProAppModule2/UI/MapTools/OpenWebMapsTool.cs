@@ -86,7 +86,7 @@ namespace ProAppModule2.UI.MapTools
                     break;
 
                 case "Abrir en Esri":
-                    url = $"https://www.arcgis.com/home/webmap/viewer.html?" +
+                    url = $"https://www.arcgis.com/apps/mapviewer/index.html?" +
                           $"basemapUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FWorld_Imagery%2FMapServer" +
                           $"&basemapReferenceUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FReference%2FWorld_Boundaries_and_Places%2FMapServer" +
                           $"&center={coords.X}%2C{coords.Y}" +

@@ -184,26 +184,7 @@ namespace ProAppModule2
         /// Obtiene una capa específica según el tipo solicitado.
         /// </summary>
         /// <param name="layerType">Tipo de capa: "vectores" o "corine"</param>
-        /// <returns>FeatureLayer encontrada o null si no existe.</returns>
-        /*public static Task<FeatureLayer> GetDynamicLayer(string layerType)
-        {
-            return QueuedTask.Run(() =>
-            {
-                var layers = MapView.Active?.Map?.GetLayersAsFlattenedList().OfType<FeatureLayer>();
-                if (layers == null) return null;
-
-                string pattern = layerType switch
-                {
-                    "vectoresDeCambio" => @"^Vectores_Cambios_\d+_\d+$", // Busca Vectores_Cambios_XX_XX
-                    "capaCorine" => @"^Cobertura_Corine_\d{4}$", // Busca Cobertura_Corine_YYYY (año de 4 dígitos)
-                    _ => null
-                };
-
-                if (pattern == null) return null;
-
-                return layers.FirstOrDefault(fl => Regex.IsMatch(fl.Name, pattern));
-            });
-        }*/
+        /// <returns>FeatureLayer encontrada o null si no existe.</returns>       
         public static Task<FeatureLayer> GetDynamicLayer(string layerType)
         {
             return QueuedTask.Run(() =>
@@ -215,8 +196,8 @@ namespace ProAppModule2
                 // Definir el patrón de búsqueda para las capas según el tipo
                 string pattern = layerType switch
                 {
-                    "vectoresDeCambio" => @"^Vectores_Cambios_\d+_\d+$",
-                    "capaCorine" => @"^Cobertura_Corine_\d{4}$",
+                    "vectoresDeCambio" => @"^Cambios_\d{2}_\d{2}$",
+                    "capaCorine" => @"^CLC\d{4}_B\d+_asignacion$",
                     _ => null
                 };
 
@@ -260,7 +241,8 @@ namespace ProAppModule2
 
                 // Obtener todas las capas y buscar la de topología
                 var layers = targetPane.MapView.Map.GetLayersAsFlattenedList();
-                return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name == "Cobertura_Corine_Topologia");
+                //return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name == "Cobertura_Corine_Topologia");
+                return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name.Contains("Topology"));
             });
         }
 

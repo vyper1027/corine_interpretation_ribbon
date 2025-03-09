@@ -28,12 +28,13 @@ namespace ProAppModule2.UI.Buttons
 {
     internal class Reviewer : Button
     {
-        protected override void OnClick()
+        protected override async void OnClick()
         {
             try
             {
-                var featureLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().Where(fl => fl.Name.Contains("Vectores_Cambios_18_20")).FirstOrDefault();
-
+                var layer = await Utils.GetDynamicLayer("vectoresDeCambio");
+                //var layerName = layer?.Name ?? "No se encontro la capa de cambios";
+                //var featureLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().Where(fl => fl.Name.Contains(layerName)).FirstOrDefault();
                 var count = QueuedTask.Run(() =>
                 {
                     QueryFilter qf = new QueryFilter()
@@ -41,7 +42,7 @@ namespace ProAppModule2.UI.Buttons
                         WhereClause = "Estado = 'Por Revisar'"
                     };
 
-                    using (RowCursor rows = featureLayer.Search(qf)) //execute
+                    using (RowCursor rows = layer.Search(qf)) //execute
                     {
                         //Looping through to count
                         int i = 0;
@@ -52,7 +53,7 @@ namespace ProAppModule2.UI.Buttons
                         {
                             WhereClause = "Estado = 'Aprobado'"
                         };
-                        using (RowCursor rows1 = featureLayer.Search(qf2)) //execute
+                        using (RowCursor rows1 = layer.Search(qf2)) //execute
                         {
                             //Looping through to count
                             int j = 0;
@@ -66,9 +67,6 @@ namespace ProAppModule2.UI.Buttons
                             string Text = txt.ToString();
                             //Module1.ToggleState("controls_edbox");
                         }
-
-
-
                         return i;
                     }
 
@@ -78,42 +76,6 @@ namespace ProAppModule2.UI.Buttons
             {
                 MessageBox.Show(ex.ToString(), "Error");
             }
-        }
-
-        double GetArea(FeatureClass fc)
-        {
-            try
-            {
-                using (FeatureClassDefinition fcd = fc.GetDefinition())
-                {
-                    // the name of the area field changes depending on what enterprise geodatabase is used
-                    var areaFieldName = "Estado";
-                    ArcGIS.Core.Data.Field areaField = fcd.GetFields().FirstOrDefault(x => x.Name.Contains(areaFieldName));
-                    if (areaField == null) return 0;
-                    System.Diagnostics.Debug.WriteLine(areaField.Name); // Output is "Shape.STArea()" as expected
-
-                    StatisticsDescription SumDesc = new StatisticsDescription(areaField, new List<ArcGIS.Core.Data.StatisticsFunction>() { ArcGIS.Core.Data.StatisticsFunction.Count });
-                    System.Diagnostics.Debug.WriteLine(SumDesc);
-                    TableStatisticsDescription tsd = new TableStatisticsDescription(new List<StatisticsDescription>() { SumDesc });
-                    System.Diagnostics.Debug.WriteLine(tsd.ToString());
-                    double sum = 0;
-                    try
-                    {
-                        sum = fc.CalculateStatistics(tsd).FirstOrDefault().StatisticsResults.FirstOrDefault().Count; // exception is thrown on this line
-                        System.Diagnostics.Debug.WriteLine(sum.ToString());
-                    }
-                    catch
-                    {
-                        //sum = Utilities.GetSumWorkAround(fc, areaField.Name);
-                    }
-                    return sum;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.ToString(), "Error");
-                return 0;
-            }
-        }
+        }        
     }
 }

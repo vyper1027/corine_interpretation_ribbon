@@ -15,14 +15,15 @@ namespace ProAppModule2
 
         public EditboxRv()
         {
-            QueuedTask.Run(() =>
+            QueuedTask.Run(async () =>
             {
-                var featureLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().Where(fl => fl.Name.Contains("Vectores_Cambios_18_20")).FirstOrDefault();
+                var layer = await Utils.GetDynamicLayer("vectoresDeCambio");
+                //var featureLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().Where(fl => fl.Name.Contains("Vectores_Cambios_18_20")).FirstOrDefault();
                 QueryFilter qf = new QueryFilter()
                 {
                     WhereClause = "Estado = 'Por Revisar'"
                 };
-                using (RowCursor rows = featureLayer.Search(qf)) //execute
+                using (RowCursor rows = layer.Search(qf)) //execute
                 {
                     //Looping through to count
                     int i = 0;
@@ -33,41 +34,18 @@ namespace ProAppModule2
                     {
                         WhereClause = "Estado = 'Aprobado'"
                     };
-                    using (RowCursor rows1 = featureLayer.Search(qf2)) //execute
+                    using (RowCursor rows1 = layer.Search(qf2)) //execute
                     {
                         //Looping through to count
                         int j = 0;
                         while (rows1.MoveNext()) j++;
                         System.Diagnostics.Debug.WriteLine(j.ToString());
-                        System.Diagnostics.Debug.WriteLine(i.ToString());
-                        //MessageBox.Show(String.Format("Total de poligonos por Revisar: {0}", i.ToString()));
-                        //Module1.Current.Reviewer1 = this;
+                        System.Diagnostics.Debug.WriteLine(i.ToString());                        
                         var txt = "Total de poligonos por Revisar: " + i.ToString() + "\nTotal de poligonos Aprobados: " + j.ToString();
                         Text = txt.ToString();
                     }
-
-
-
                     return i;
-                }
-
-                //Modvalueset();
-                //Module1.Current.ModValueToSetcl20181 = this;
-                //Text = "Prueba"; //id.ToString();
-                //const string layer = "Vectores_Cambios_18_20";
-                //var featLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals(layer));
-                //var featSelectionOIDs = featLayer.GetSelection().GetObjectIDs();
-                //var qf = new QueryFilter() { ObjectIDs = featSelectionOIDs };
-                //var rowCursor = featLayer.Search(qf);
-                //while (rowCursor.MoveNext())
-                //{
-                //    using (var feat = rowCursor.Current as Feature)
-                //    {
-                //        var id = feat.GetOriginalValue(10);
-                //        Module1.Current.Reviewer1 = this;
-                //        Text = id.ToString();
-                //    }
-                //}
+                }                
             });
 
         }

@@ -90,24 +90,43 @@ namespace GeoprocessingExecuteAsync
                 {
                     Utils.SendMessageToDockPane("❌ No se pudo obtener la vista activa.");
                     return;
+                }                      
+
+                SpatialReference srTopologyLayer = topologyLayer.GetSpatialReference();
+                if (srTopologyLayer == null) 
+                { 
+                    Utils.SendMessageToDockPane("no existe layer de topologia, revisa que exista y que tenga el nombre indicado");
+                    return;
+                }
+
+                LinearUnit linearUnitTopologyLayer = srTopologyLayer.Unit as LinearUnit;
+                if (linearUnitTopologyLayer.Name != "Meter")
+                {
+                    Utils.SendMessageToDockPane($"📏 Unidad de medida incorrecta: {linearUnitTopologyLayer.Name}, la capa debe estar en Meter", true);                    
+                    return;
+                }               
+
+                double extentArea = activeView.Extent.Area;
+                if (extentArea > 1521354409.2) 
+                {
+                    Utils.SendMessageToDockPane("❌ El area del extent es demasiado grande para validar la topologia.");
+                    return;
                 }
 
                 Envelope extent = activeView.Extent;
-
                 if (extent == null || extent.IsEmpty)
                 {
                     Utils.SendMessageToDockPane("❌ No se pudo obtener el extent actual.");
                     return;
                 }
 
-                SpatialReference srCapa = topologyLayer.GetSpatialReference();
-                if (srCapa == null)
+                if (srTopologyLayer == null)
                 {
                     Utils.SendMessageToDockPane("❌ No se pudo obtener el sistema de coordenadas de la capa de topología.");
                     return;
                 }
 
-                if (GeometryEngine.Instance.Project(extent, srCapa) is not Envelope convertedExtent || convertedExtent.IsEmpty)
+                if (GeometryEngine.Instance.Project(extent, srTopologyLayer) is not Envelope convertedExtent || convertedExtent.IsEmpty)
                 {
                     Utils.SendMessageToDockPane("❌ No se pudo reproyectar el extent al sistema de coordenadas de la capa.");
                     return;
