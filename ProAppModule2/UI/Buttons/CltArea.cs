@@ -43,7 +43,6 @@ namespace ProAppModule2.UI.Buttons
                         return;
                     }
 
-                    // Obtener las capas
                     var featureLayer1 = map.GetLayersAsFlattenedList()
                                            .OfType<FeatureLayer>()
                                            .FirstOrDefault(fl => fl.Name.Equals(layerName1));
@@ -51,14 +50,12 @@ namespace ProAppModule2.UI.Buttons
                                            .OfType<FeatureLayer>()
                                            .FirstOrDefault(fl => fl.Name.Equals(layerName2));
 
-                    // Validar las capas
                     if (featureLayer1 == null && featureLayer2 == null)
                     {
                         Utils.SendMessageToDockPane($"No se encontraron las capas '{layerName1}' ni '{layerName2}'.");
                         return;
                     }
 
-                    // Priorizar la capa activa y seleccionada
                     if (featureLayer1 != null && featureLayer1.GetSelection().GetCount() > 0)
                     {
                         CalcularArea(featureLayer1, layerName1);
@@ -91,6 +88,7 @@ namespace ProAppModule2.UI.Buttons
                 }
 
                 double totalArea = 0;
+                SpatialReference targetSR = SpatialReferenceBuilder.CreateSpatialReference(103599);
 
                 using (var rowCursor = featureLayer.Search(new QueryFilter { ObjectIDs = selectedOIDs }))
                 {
@@ -100,14 +98,23 @@ namespace ProAppModule2.UI.Buttons
                         {
                             if (feat != null)
                             {
-                                var area = feat["Shape_Area"];
-                                totalArea += Convert.ToDouble(area);
+                                var shape = feat.GetShape();
+                                if (shape == null) continue;
+
+                                var sr = shape.SpatialReference;
+                                if (sr == null || sr.Wkid != 7399)
+                                {
+                                    shape = GeometryEngine.Instance.Project(shape, targetSR);
+                                }
+
+                                double area = GeometryEngine.Instance.Area(shape);
+                                totalArea += area;
                             }
                         }
                     }
                 }
 
-                double totalAreaHa = totalArea / 10000; // Convertir a hectáreas
+                double totalAreaHa = totalArea / 10000;
                 string message = $"Capa: {layerName}\n" +
                                  $"Área total seleccionada: {Math.Round(totalAreaHa, 3)} ha\n" +
                                  $"{Math.Round(totalArea, 3)} m²";

@@ -99,12 +99,23 @@ namespace GeoprocessingExecuteAsync
                     return;
                 }
 
-                LinearUnit linearUnitTopologyLayer = srTopologyLayer.Unit as LinearUnit;
-                if (linearUnitTopologyLayer.Name != "Meter")
+                if (srTopologyLayer.Unit is AngularUnit angularUnitTopologyLayer)
                 {
-                    Utils.SendMessageToDockPane($"📏 Unidad de medida incorrecta: {linearUnitTopologyLayer.Name}, la capa debe estar en Meter", true);                    
-                    return;
-                }               
+                    if (angularUnitTopologyLayer.Name != "Degree")
+                    {
+                        Utils.SendMessageToDockPane($"📏 Unidad de medida incorrecta: {angularUnitTopologyLayer.Name}, la capa debe estar en Degree", true);
+                        return;
+                    }
+                }
+                else if (srTopologyLayer.Unit is LinearUnit linearUnitTopologyLayer)
+                {
+                    if (linearUnitTopologyLayer.Name != "Meter")
+                    {
+                        Utils.SendMessageToDockPane($"📏 Unidad de medida incorrecta: {linearUnitTopologyLayer.Name}, la capa debe estar en Meter", true);
+                        return;
+                    }
+                }
+
 
                 double extentArea = activeView.Extent.Area;
                 if (extentArea > 1521354409.2) 

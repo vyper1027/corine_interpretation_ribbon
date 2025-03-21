@@ -21,6 +21,8 @@ using ArcGIS.Core.Data;
 using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Core.CIM;
+using ArcGIS.Desktop.Editing.Attributes;
+using System;
 
 namespace ProAppModule2.UI.MapTools
 {
@@ -75,7 +77,17 @@ namespace ProAppModule2.UI.MapTools
                 Table featureClass = editableLayer.GetTable();
                 var selectedOIDs = new List<long>();
 
-                using (var rowCursor = featureClass.Search(geometry, SpatialRelationship.Intersects, false))
+                var firstPolygonInfo = GetFirstIntersectedPolygon(featureClass, geometry);
+                long firstFeatureOID = firstPolygonInfo.Key;
+                Dictionary<string, object> firstPolygonAttributes = firstPolygonInfo.Value;
+
+                var spatialQueryFilter = new SpatialQueryFilter
+                {
+                    FilterGeometry = geometry,
+                    SpatialRelationship = SpatialRelationship.Intersects
+                };
+
+                using (var rowCursor = featureClass.Search(spatialQueryFilter, false))
                 {
                     while (rowCursor.MoveNext())
                     {
@@ -89,7 +101,16 @@ namespace ProAppModule2.UI.MapTools
                 if (selectedOIDs.Count >= 2)
                 {
                     Utils.SendMessageToDockPane($"{selectedOIDs.Count} polígonos seleccionados para la unión.");
-                    mergeOperation.Merge(editableLayer, selectedOIDs);
+
+                    var inspector = new Inspector();
+                    inspector.Load(editableLayer, firstFeatureOID);
+
+                    foreach (var kvp in firstPolygonAttributes)
+                    {
+                        inspector[kvp.Key] = kvp.Value;
+                    }
+
+                    mergeOperation.Merge(editableLayer, selectedOIDs, inspector);
                 }
                 else
                 {
@@ -109,6 +130,55 @@ namespace ProAppModule2.UI.MapTools
             }
 
             return Task.FromResult(operationResult);
+        }
+
+        private KeyValuePair<long, Dictionary<string, object>> GetFirstIntersectedPolygon(Table featureClass, Geometry geometry)
+        {
+            Polyline polyline = geometry as Polyline;
+            MapPoint firstPoint = polyline?.Points.FirstOrDefault();
+
+            if (firstPoint == null)
+            {
+                return new KeyValuePair<long, Dictionary<string, object>>(-1, null);
+            }
+
+            var spatialQueryFilter = new SpatialQueryFilter
+            {
+                FilterGeometry = geometry,
+                SpatialRelationship = SpatialRelationship.Intersects
+            };
+
+            using (var rowCursor = featureClass.Search(spatialQueryFilter, false))
+            {
+                while (rowCursor.MoveNext())
+                {
+                    using (var feature = rowCursor.Current as Feature)
+                    {
+                        if (feature != null)
+                        {
+                            Polygon polygonGeometry = feature.GetShape() as Polygon;
+
+                            if (polygonGeometry != null && GeometryEngine.Instance.Contains(polygonGeometry, firstPoint))
+                            {
+                                var attributes = new Dictionary<string, object>();
+
+                                for (int i = 0; i < feature.GetFields().Count; i++)
+                                {
+                                    var field = feature.GetFields()[i];
+                                    if (!field.Name.Equals("OBJECTID", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        attributes[field.Name] = feature[i];
+                                    }
+                                }
+
+                                return new KeyValuePair<long, Dictionary<string, object>>(feature.GetObjectID(), attributes);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return new KeyValuePair<long, Dictionary<string, object>>(-1, null);
         }
 
         protected override async Task<bool> OnSketchModifiedAsync()

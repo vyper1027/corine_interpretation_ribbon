@@ -64,13 +64,7 @@ namespace ProAppModule2.UI.Buttons
                     MessageBox.Show("No ha seleccionado ningun registro, " + featLayer.Name + ". Proceda con la selecciòn...", "Info");
                     return;
                 }
-
-                if (featSelectionOIDs.Count > 1)
-                {
-                    MessageBox.Show("Solo debe seleccionar un poligono, " + featLayer.Name + ". Proceda con la selecciòn...", "Info");
-                    return;
-                }
-
+                
                 await Project.Current.SetIsEditingEnabledAsync(true);
                 Module1.ToggleState("controls_atb");
             });

@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GeoprocessingExecuteAsync;
+using ArcGIS.Core.Data.Exceptions;
 
 
 namespace ProAppModule2.UI.Buttons
@@ -75,7 +76,7 @@ namespace ProAppModule2.UI.Buttons
                     return;
                 }
 
-                await Project.Current.SetIsEditingEnabledAsync(true);
+                var activateEditing = await Project.Current.SetIsEditingEnabledAsync(true);
 
                 //selectedFeatureID = featSelectionOIDs.ToList()[0];
                 // Get the name of the attribute to update, and the value to set:
@@ -128,9 +129,8 @@ namespace ProAppModule2.UI.Buttons
                     // 📌 Insertar los polígonos en la capa destino y obtener los nuevos ObjectIDs
                     List<long> newFeatureOIDs = await InsertSelectedFeaturesIntoCorine(featLayer, targetLayer, featSelectionOIDs);
 
-                    if (newFeatureOIDs.Count > 0)
+                    if (newFeatureOIDs.Count > 0)                    
                     {
-                        // 📌 Ahora usamos los nuevos ObjectIDs en el recorte
                         await ClipInsertedFeatures(targetLayer, newFeatureOIDs);
                     }
                     else
@@ -156,78 +156,82 @@ namespace ProAppModule2.UI.Buttons
         {
             return await QueuedTask.Run(() =>
             {
+                List<long> newObjectIDs = new List<long>();
+                string errorMessage = string.Empty;
+
                 try
                 {
-                    List<RowToken> newRowTokens = new List<RowToken>(); // 📌 Lista de RowTokens temporales
-
                     using (var sourceTable = sourceLayer.GetTable())
                     using (var targetTable = targetLayer.GetTable())
                     using (var rowCursor = sourceTable.Search(new QueryFilter { ObjectIDs = oids }, false))
                     {
-                        var createFeatures = new EditOperation() { Name = "Copiar entidades a Corine" };
+                        FeatureClassDefinition targetDefinition = (FeatureClassDefinition)targetTable.GetDefinition();
 
-                        // Iterar sobre las entidades seleccionadas en la capa de origen
-                        while (rowCursor.MoveNext())
+                        // Crear operación de edición
+                        EditOperation editOperation = new EditOperation
                         {
-                            using (var row = rowCursor.Current)
+                            Name = "Copiar entidades a Corine"
+                        };
+
+                        editOperation.Callback(context =>
+                        {
+                            while (rowCursor.MoveNext())
                             {
-                                var shape = row["SHAPE"] as Geometry; 
-                                var codigo = row["C2020_clc"]; 
-
-                                // 📌 Diccionario con atributos para la nueva entidad
-                                var attributes = new Dictionary<string, object>
+                                using (var row = rowCursor.Current)
+                                using (RowBuffer rowBuffer = targetTable.CreateRowBuffer())
                                 {
-                                    { "SHAPE", shape },                            
-                                    { "area_ha", null },
-                                    { "cambio", 2 },
-                                    { "codigo", codigo },
-                                    { "confiabili", null },                                   
-                                    { "insumo", "Sentinel" },                                                    
-                                    { "h_aprob", DateTime.Now }
-                                };
+                                    // Copiar atributos
+                                    rowBuffer[targetDefinition.GetShapeField()] = row[targetDefinition.GetShapeField()];
+                                    rowBuffer["area_ha"] = row["area_ha"];
+                                    rowBuffer["cambio"] = 2;
+                                    rowBuffer["codigo"] = row["codigo"];
+                                    rowBuffer["confiabili"] = null;
+                                    rowBuffer["insumo"] = row["insumo"];
+                                    rowBuffer["horaAprobacion"] = DateTime.Now;
+                                    rowBuffer["apoyo"] = null;
 
-                                // 📌 Crear la entidad en la capa destino y capturar el RowToken
-                                RowToken newRow = createFeatures.Create(targetTable, attributes);
-                                if (newRow != null)
-                                {
-                                    newRowTokens.Add(newRow);
+                                    using (Feature newFeature = (Feature)targetTable.CreateRow(rowBuffer))
+                                    {
+                                        // Indicar que se debe actualizar la tabla
+                                        context.Invalidate(newFeature);
+
+                                        // Obtener el ObjectID de la nueva entidad
+                                        long newOID = newFeature.GetObjectID();
+                                        if (newOID > 0)
+                                        {
+                                            newObjectIDs.Add(newOID);
+                                        }
+                                    }
                                 }
                             }
-                        }
+                        }, targetTable);
 
-                        // 📌 Ejecutar la operación de inserción
-                        if (!createFeatures.IsEmpty)
+                        // Ejecutar la operación de edición
+                        if (!editOperation.Execute())
                         {
-                            var success = createFeatures.Execute();
-                            if (!success)
-                            {
-                                Utils.SendMessageToDockPane("❌ Error al copiar los polígonos en la capa destino.");
-                                return new List<long>(); // Retornar lista vacía si falla la inserción
-                            }
+                            errorMessage = editOperation.ErrorMessage;
                         }
-
-                        // 📌 Obtener los ObjectIDs reales de los nuevos features
-                        List<long> newObjectIDs = new List<long>();
-                        foreach (var token in newRowTokens)
-                        {
-                            var newOID = token.ObjectID;
-                            if (newOID > 0)
-                                newObjectIDs.Add((long)newOID);
-                        }
-
-                        Utils.SendMessageToDockPane($"✅ Se copiaron {newObjectIDs.Count} polígonos a la capa Corine.");
-                        return newObjectIDs;
                     }
                 }
-                catch (Exception ex)
+                catch (GeodatabaseException ex)
                 {
-                    Utils.SendMessageToDockPane($"❌ Error en la inserción: {ex.Message}");
+                    errorMessage = ex.Message;
                 }
 
-                return new List<long>(); // 📌 Si hay un problema, devolver lista vacía
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    Utils.SendMessageToDockPane($"❌ Error en la inserción: {errorMessage}");
+                }
+                else
+                {
+                    Utils.SendMessageToDockPane($"✅ Se copiaron {newObjectIDs.Count} polígonos a la capa Corine.");
+                }
+
+                return newObjectIDs;
             });
         }
-        
+
+
         /// <summary>
         /// Recorta los polígonos insertados para evitar superposición (Overlap)
         /// </summary>
@@ -238,83 +242,103 @@ namespace ProAppModule2.UI.Buttons
                 try
                 {
                     using (var targetTable = targetLayer.GetTable())
-                    using (var rowCursor = targetTable.Search(new QueryFilter { ObjectIDs = oids }, false))
                     {
                         var editOp = new EditOperation() { Name = "Recortar nuevas geometrías superpuestas" };
 
                         // 📌 Obtener la referencia espacial de la capa destino
                         var spatialReference = targetLayer.GetSpatialReference();
 
-                        while (rowCursor.MoveNext())
+                        List<long> affectedFeatureIds = new List<long>(); // Para mostrar los IDs modificados
+
+                        // 📌 Diccionario para acumular recortes por FeatureID
+                        Dictionary<long, Geometry> geometriesToModify = new Dictionary<long, Geometry>();
+
+                        // 📌 Iterar sobre cada OID recibido (geometrías insertadas)
+                        foreach (long oid in oids)
                         {
-                            using var row = rowCursor.Current;
-                            Geometry newGeometry = row["SHAPE"] as Geometry;
-                            if (newGeometry == null) continue;
-
-                            // 📌 Asegurar que la nueva geometría esté en la misma referencia espacial
-                            if (newGeometry.SpatialReference.Wkid != spatialReference.Wkid)
+                            // Obtener la nueva geometría insertada
+                            var queryFilter = new QueryFilter() { ObjectIDs = new List<long> { oid } };
+                            using (var rowCursor = targetTable.Search(queryFilter, false))
                             {
-                                newGeometry = GeometryEngine.Instance.Project(newGeometry, spatialReference);
-                            }
+                                if (!rowCursor.MoveNext()) continue; // Si no encuentra la geometría, continuar
 
-                            // 📌 Filtrar solo las geometrías cercanas con SpatialQueryFilter
-                            var spatialFilter = new SpatialQueryFilter()
-                            {
-                                FilterGeometry = newGeometry, // Filtrar geometrías que intersectan
-                                SpatialRelationship = SpatialRelationship.Intersects,
-                                SubFields = "*"  // Asegurar que obtenemos todos los atributos
-                            };
-
-                            List<long> affectedFeatureIds = new List<long>(); // Para mostrar los IDs modificados
-                            using (var targetCursor = targetTable.Search(spatialFilter, false))
-                            {
-                                while (targetCursor.MoveNext())
+                                using (var row = rowCursor.Current)
                                 {
-                                    using (var targetFeature = targetCursor.Current as Feature)
+                                    Geometry newGeometry = row["SHAPE"] as Geometry;
+                                    if (newGeometry == null) continue;
+
+                                    // 📌 Asegurar que la nueva geometría esté en la misma referencia espacial
+                                    if (newGeometry.SpatialReference.Wkid != spatialReference.Wkid)
                                     {
-                                        Geometry existingGeometry = targetFeature.GetShape();
-                                        if (existingGeometry != null && !oids.Contains(targetFeature.GetObjectID()))
+                                        newGeometry = GeometryEngine.Instance.Project(newGeometry, spatialReference);
+                                    }
+
+                                    // 📌 Buscar geometrías existentes que se intersectan con `newGeometry`
+                                    var spatialFilter = new SpatialQueryFilter()
+                                    {
+                                        FilterGeometry = newGeometry,
+                                        SpatialRelationship = SpatialRelationship.Intersects,
+                                        SubFields = "*"
+                                    };
+
+                                    using (var targetCursor = targetTable.Search(spatialFilter, false))
+                                    {
+                                        while (targetCursor.MoveNext())
                                         {
-                                            // 📌 Asegurar que las geometrías están en el mismo SR
-                                            if (existingGeometry.SpatialReference.Wkid != spatialReference.Wkid)
+                                            using (var targetFeature = targetCursor.Current as Feature)
                                             {
-                                                existingGeometry = GeometryEngine.Instance.Project(existingGeometry, spatialReference);
-                                            }
+                                                long featureId = targetFeature.GetObjectID();
+                                                if (oids.Contains(featureId)) continue; // Evitar recortar la geometría recién insertada
 
-                                            // 📌 Recortar el polígono existente con la nueva geometría
-                                            Geometry clippedGeometry = GeometryEngine.Instance.Difference(existingGeometry, newGeometry);
+                                                Geometry existingGeometry = targetFeature.GetShape();
+                                                if (existingGeometry == null) continue;
 
-                                            // 📌 Verificar si el recorte es válido
-                                            if (clippedGeometry != null && !clippedGeometry.IsEmpty)
-                                            {
-                                                editOp.Modify(targetTable, targetFeature.GetObjectID(),
-                                                    new Dictionary<string, object> { { "SHAPE", clippedGeometry } });
+                                                // 📌 Asegurar que `existingGeometry` esté en la misma referencia espacial
+                                                if (existingGeometry.SpatialReference.Wkid != spatialReference.Wkid)
+                                                {
+                                                    existingGeometry = GeometryEngine.Instance.Project(existingGeometry, spatialReference);
+                                                }
 
-                                                affectedFeatureIds.Add(targetFeature.GetObjectID()); // Agregar ID afectado
+                                                // 📌 Acumular geometría a recortar
+                                                if (geometriesToModify.ContainsKey(featureId))
+                                                {
+                                                    // Aplicar Difference acumulativamente
+                                                    geometriesToModify[featureId] = GeometryEngine.Instance.Difference(
+                                                        geometriesToModify[featureId], newGeometry);
+                                                }
+                                                else
+                                                {
+                                                    geometriesToModify[featureId] = GeometryEngine.Instance.Difference(
+                                                        existingGeometry, newGeometry);
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
+                        }
 
-                            // 📌 Mensaje con los IDs de las geometrías afectadas
-                            if (affectedFeatureIds.Count > 0)
+                        // 📌 Aplicar todas las modificaciones acumuladas
+                        foreach (var entry in geometriesToModify)
+                        {
+                            if (entry.Value != null && !entry.Value.IsEmpty)
                             {
-                                Utils.SendMessageToDockPane($"✅ Se recortaron los siguientes IDs: {string.Join(", ", affectedFeatureIds)}", true);
+                                editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> { { "SHAPE", entry.Value } });
+                                affectedFeatureIds.Add(entry.Key);
                             }
                         }
 
-                        // Ejecutar la operación de recorte
+                        // 📌 Ejecutar la operación de edición si hay cambios
                         if (!editOp.IsEmpty)
                         {
                             var success = editOp.Execute();
-                            if (!success)
+                            if (success)
                             {
-                                Utils.SendMessageToDockPane("❌ Error al recortar los polígonos insertados.", true);
+                                Utils.SendMessageToDockPane($"✅ Recorte completado con éxito. IDs afectados: {string.Join(", ", affectedFeatureIds)}", true);
                             }
                             else
                             {
-                                Utils.SendMessageToDockPane("✅ Recorte completado con éxito. No hay superposición.", true);
+                                Utils.SendMessageToDockPane("❌ Error al recortar los polígonos insertados.", true);
                             }
                         }
                         else
@@ -329,6 +353,8 @@ namespace ProAppModule2.UI.Buttons
                 }
             });
         }
+
+
 
 
 

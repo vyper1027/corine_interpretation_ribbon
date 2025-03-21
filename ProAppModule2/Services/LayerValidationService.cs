@@ -69,13 +69,17 @@ public static class LayerValidationService
             {
                 Utils.SendMessageToDockPane("✅ Sistema de coordenadas correcto: EPSG 9377", true);
             }
+            else if (sr.Wkid == 4686)
+            {
+                Utils.SendMessageToDockPane("✅ Sistema de coordenadas correcto: EPSG 4686 (MAGNA-SIRGAS)", true);
+            }
             else if (sr.Name.Contains("Transverse Mercator") && sr.VcsWkid == 4686)
             {
                 Utils.SendMessageToDockPane("✅ Sistema de coordenadas correcto: Transverse Mercator con MAGNA-SIRGAS.", true);
             }
             else
             {
-                Utils.SendMessageToDockPane($"❌ El sistema de coordenadas es incorrecto: {sr.Wkid}. Debe ser EPSG 9377", true);
+                Utils.SendMessageToDockPane($"❌ El sistema de coordenadas es incorrecto: {sr.Wkid}. Debe ser EPSG 9377 o 4686", true);
             }
 
             Utils.SendMessageToDockPane("✅ Validación de conformidad del archivo completada.", true);
