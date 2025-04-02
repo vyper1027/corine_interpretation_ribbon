@@ -34,10 +34,11 @@ namespace ProAppModule2.UI.Buttons
         {
             _analysisService = new CorineAnalysisService();
         }
-        protected override void OnClick()        {
-            
-            ApproveValues();            
-           
+        protected override void OnClick()
+        {
+
+            ApproveValues();
+
         }
 
         public void ApproveValues()
@@ -125,11 +126,11 @@ namespace ProAppModule2.UI.Buttons
 
                     // ✅ Verificar si el CheckBox de Validar Topología está activado
                     bool isTopologyValidationEnabled = FrameworkApplication.State.Contains("Control_Topology_cond");
-                                        
+
                     // 📌 Insertar los polígonos en la capa destino y obtener los nuevos ObjectIDs
                     List<long> newFeatureOIDs = await InsertSelectedFeaturesIntoCorine(featLayer, targetLayer, featSelectionOIDs);
 
-                    if (newFeatureOIDs.Count > 0)                    
+                    if (newFeatureOIDs.Count > 0)
                     {
                         await ClipInsertedFeatures(targetLayer, newFeatureOIDs);
                     }
@@ -353,10 +354,5 @@ namespace ProAppModule2.UI.Buttons
                 }
             });
         }
-
-
-
-
-
     }
 }

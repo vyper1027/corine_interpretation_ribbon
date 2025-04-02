@@ -146,6 +146,7 @@
 			<!-- host controls within groups -->
 			<button refID="ProAppModule2_Split_Feature_Button" size="large" />
 			<button refID="ProAppModule2_Merge_Feature_Button" size="large" />
+			<button refID="ProAppModule2_Explode_Feature_Button" size="large" />			
 		</group>
 		<group id="ProAppModule2_Group11" caption="Evaluar en Mapa Externo" appearsOnAddInTab="true">
 			<!-- host controls within groups -->
@@ -246,6 +247,10 @@
 		</tool>
 		  
 		<button id="ProAppModule2_Merge_Feature_Button" caption="Unir Poligono" className="UI.MapTools.MergeTool" loadOnClick="true" keytip="z2" smallImage="EditingFeatureMerge16" largeImage="EditingFeatureMerge32">
+			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
+		</button>
+		  
+		 <button id="ProAppModule2_Explode_Feature_Button" caption="Explotar Poligono" className="UI.MapTools.ExplodeTool" loadOnClick="true" keytip="z2" smallImage="EditingExplode16" largeImage="EditingExplode32">
 			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
 		</button>
 		  

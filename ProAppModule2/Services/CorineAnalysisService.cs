@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ArcGIS.Core.Data.Topology;
 using ArcGIS.Core.Geometry;
@@ -6,7 +7,7 @@ using ArcGIS.Desktop.Core;
 using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
-using ProAppModule2; 
+using ProAppModule2;
 
 namespace GeoprocessingExecuteAsync
 {
@@ -84,17 +85,17 @@ namespace GeoprocessingExecuteAsync
                     Utils.SendMessageToDockPane("❌ No se pudo obtener la topología desde el layer.");
                     return;
                 }
-                
+
                 var activeView = MapView.Active;
                 if (activeView == null)
                 {
                     Utils.SendMessageToDockPane("❌ No se pudo obtener la vista activa.");
                     return;
-                }                      
+                }
 
                 SpatialReference srTopologyLayer = topologyLayer.GetSpatialReference();
-                if (srTopologyLayer == null) 
-                { 
+                if (srTopologyLayer == null)
+                {
                     Utils.SendMessageToDockPane("no existe layer de topologia, revisa que exista y que tenga el nombre indicado");
                     return;
                 }
@@ -118,7 +119,7 @@ namespace GeoprocessingExecuteAsync
 
 
                 double extentArea = activeView.Extent.Area;
-                if (extentArea > 1521354409.2) 
+                if (extentArea > 1521354409.2)
                 {
                     Utils.SendMessageToDockPane("❌ El area del extent es demasiado grande para validar la topologia.");
                     return;
@@ -145,12 +146,12 @@ namespace GeoprocessingExecuteAsync
 
                 Utils.SendMessageToDockPane($"🔍 Validando topología en el extent actual...", true);
 
-
-                if (Project.Current.HasEdits)
+                /*if (Project.Current.HasEdits)
                 {
                     Utils.SendMessageToDockPane("⚠ Hay ediciones pendientes. Guardando cambios...");
                     await Project.Current.SaveEditsAsync();
-                }
+                }*/
+
                 // Validar la topología dentro del extent actual
                 ValidationResult result = topology.Validate(new ValidationDescription(convertedExtent));
 
@@ -258,4 +259,3 @@ namespace GeoprocessingExecuteAsync
 
     }
 }
-

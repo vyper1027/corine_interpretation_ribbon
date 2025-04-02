@@ -8,6 +8,12 @@
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Services\NewFolder\**" />
+    <EmbeddedResource Remove="Services\NewFolder\**" />
+    <None Remove="Services\NewFolder\**" />
+    <Page Remove="Services\NewFolder\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="Config.daml" />
   </ItemGroup>
   <ItemGroup>

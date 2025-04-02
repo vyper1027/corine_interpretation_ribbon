@@ -38,14 +38,7 @@ namespace ProAppModule2.UI.Buttons
                 return;
             }
             QueuedTask.Run(async () =>
-            {
-                //Project.Current.SetIsEditingEnabledAsync(true);
-                // Get the layer selected in the Contents pane, and prompt if there is none:
-                //if (MapView.Active.GetSelectedLayers().Count == 0)
-                //{
-                //    ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No feature layer selected in Contents pane. Exiting...", "Info");
-                //    return;
-                //}
+            {               
                 // Check to see if there is a selected feature layer
                 var featLayer = await Utils.GetDynamicLayer("vectoresDeCambio");
 
@@ -62,19 +55,13 @@ namespace ProAppModule2.UI.Buttons
                 {
                     ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No ha seleccionado ningun registro, " + featLayer.Name + ". Proceda con la selecciòn...", "Info");
                     return;
-                }
-
-                //if (featSelectionOIDs.Count > 1)
-                //{
-                //    ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("Solo debe seleccionar un poligono, " + featLayer.Name + ". Proceda con la selecciòn...", "Info");
-                //    return;
-                //}
+                }               
 
                 await Project.Current.SetIsEditingEnabledAsync(true);
                 // Get the name of the attribute to update, and the value to set:
                 string attributename = "Estado";
                 //attributename = attributename.ToUpper();
-                string setvalue = "Eliminar";
+                string setvalue = "Eliminado";
 
                 // Display all the parameters for the update:              
 
@@ -86,12 +73,6 @@ namespace ProAppModule2.UI.Buttons
 
                 try
                 {
-                    // Now ready to do the actual editing:
-                    // 1. Create a new edit operation and a new inspector for working with the attributes
-                    // 2. Check to see if a valid field name was chosen for the feature layer
-                    // 3. If so, apply the edit
-
-                    //
                     var inspector = new ArcGIS.Desktop.Editing.Attributes.Inspector();
                     inspector.Load(featLayer, featSelectionOIDs);
                     if (inspector.HasAttributes && inspector.Count(a => a.FieldName == attributename) > 0)
