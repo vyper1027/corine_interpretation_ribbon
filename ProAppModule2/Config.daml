@@ -78,8 +78,11 @@
 		  
         <group id="ComboBoxShowingLayers_Group1" caption="Seleccion" keytip="G0" appearsOnAddInTab="true">
           <!-- host controls within groups -->
-          <comboBox refID="ComboBoxShowingLayers_SelectFeature" />
-          <tool refID="ProAppModule2_MapTool1" size="large" />
+          <comboBox refID="ComboBoxShowingLayers_SelectMes" />
+		  <comboBox refID="ComboBoxShowingLayers_SelectBloque" />
+		  <comboBox refID="ComboBoxShowingLayers_SelectPlancha" />
+
+		  <tool refID="ProAppModule2_MapTool1" size="large" />
 		  <button refID="ProAppModule2_Clear_Selection_Button" size="large" />			
 		</group>
 		  
@@ -166,10 +169,22 @@
           <tooltip heading="Tooltip Heading">Informacion URL<disabledText /></tooltip>
         </button>
 		  
-        <comboBox id="ComboBoxShowingLayers_SelectFeature" caption="Zona" className="SelectFeature" keytip="X1" editHint="Zoom a Zona" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+        <comboBox id="ComboBoxShowingLayers_SelectMes" caption="MES_INTER" className="SelectFeature" keytip="X1" editHint="Zoom a periodo de entrega" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
           <tooltip heading="Select State Feature">
 				Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText /></tooltip>
         </comboBox>
+		  
+		<comboBox id="ComboBoxShowingLayers_SelectBloque" caption="BLOQUE" className="SelectFeature" keytip="X2" editHint="Zoom a Bloque" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+			<tooltip heading="Select State Feature">
+			 Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText />
+			</tooltip>
+		</comboBox>
+
+		<comboBox id="ComboBoxShowingLayers_SelectPlancha" caption="PLANCHA" className="SelectFeature" keytip="X3" editHint="Zoom a Plancha" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+		     <tooltip heading="Select State Feature">
+				 Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText />
+			 </tooltip>
+		</comboBox>
 		  
         <tool id="ProAppModule2_MapTool1" caption="Seleccionar Poligonos" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Seleccionar Poligono<disabledText /></tooltip>

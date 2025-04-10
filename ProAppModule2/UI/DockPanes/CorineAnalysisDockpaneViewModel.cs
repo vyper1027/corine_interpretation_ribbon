@@ -66,6 +66,17 @@ namespace ProAppModule2.UI.DockPanes
         private readonly CorineAnalysisService _analysisService;
         private string _statusMessage;
 
+        private ObservableCollection<long> _selectedPolygonIds = new ObservableCollection<long>();
+        public ObservableCollection<long> SelectedPolygonIds
+        {
+            get => _selectedPolygonIds;
+            set
+            {
+                _selectedPolygonIds = value;
+                OnPropertyChanged(nameof(SelectedPolygonIds));
+            }
+        }
+
         public bool ValidateTopology
         {
             get => _validateTopology;
@@ -154,8 +165,15 @@ namespace ProAppModule2.UI.DockPanes
             {
                 StatusMessage = "Buscando polígonos menores a 5ha...";
                 OnPropertyChanged(nameof(StatusMessage));
-                await _analysisService.FindSmallPolygons();
+                List<long> polygonIds = await _analysisService.FindSmallPolygons();
                 StatusMessage = "Análisis de polígonos menores a 5ha completado.";
+                SelectedPolygonIds.Clear();
+                foreach (var id in polygonIds)
+                {
+                    SelectedPolygonIds.Add(id);
+                }
+
+                StatusMessage = $"✅ Se encontraron {polygonIds.Count} polígonos menores a 5 ha.";
             }
             else if (CalculatePriority)
             {
@@ -225,11 +243,9 @@ namespace ProAppModule2.UI.DockPanes
                 SetProperty(ref _selectedBookmark, value, () => SelectedBookmark);
                 System.Diagnostics.Debug.WriteLine("RetrieveMaps add maps");
                 if (_selectedBookmark != null)
-                {
-                    // GetMap needs to be on the MCT
+                {                    
                     QueuedTask.Run(() =>
-                    {
-                        // zoom to it
+                    {                        
                         MapView.Active.ZoomTo(_selectedBookmark);
                     });
                 }

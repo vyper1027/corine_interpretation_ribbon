@@ -1,80 +1,172 @@
-﻿using ArcGIS.Core.CIM;
-using ArcGIS.Core.Data;
+﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Core;
-using ArcGIS.Desktop.Editing;
-using ArcGIS.Desktop.Extensions;
-using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
-using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Desktop.KnowledgeGraph;
-using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using ArcGIS.Desktop.Framework.Dialogs;
 
 namespace ProAppModule2
 {
-    /// <summary>
-    /// Represents the ComboBox
-    /// </summary>
     internal class SelectFeature : ComboBox
     {
-        /// <summary>
-        /// Combo Box constructor
-        /// </summary>
-        public SelectFeature()
+        private const string LayerName = "Asig_2024_Pruebas";
+
+        // Referencias estáticas a los combos
+        public static SelectFeature ComboMes { get; private set; }
+        public static SelectFeature ComboBloque { get; private set; }
+        public static SelectFeature ComboPlancha { get; private set; }
+
+        private List<SelectFeature> _otherComboBoxes = new();
+
+        protected override void OnUpdate()
         {
-            //UpdateCombo();
+            // Asignación automática de instancia según ID
+            switch (ID)
+            {
+                case "ComboBoxShowingLayers_SelectMes":
+                    ComboMes = this;
+                    break;
+                case "ComboBoxShowingLayers_SelectBloque":
+                    ComboBloque = this;
+                    break;
+                case "ComboBoxShowingLayers_SelectPlancha":
+                    ComboPlancha = this;
+                    break;
+            }
         }
 
-        /// <summary>
-        /// Updates the combo box with all the items.
-        /// </summary>
         protected override void OnDropDownOpened()
         {
-            // collect all features in a ComboFeature collection '_comboFeatures'
-            UpdateCombo();
-        }
-        private async void UpdateCombo()
-        {
-            Clear();
-            // get the state layer
-            var featureLayer = MapView.Active.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>().FirstOrDefault(fl => fl.Name.Equals("zonas_prueba_opt")); //planchas_100k
-            if (featureLayer == null) return;
-
-            // Add feature layer names to the combobox
-            await QueuedTask.Run(() =>
-            {
-                using var featCursor = featureLayer.Search();                
-                while (featCursor.MoveNext())
-                {
-                    using var feature = featCursor.Current as Feature;
-                    Add(new FeatureComboBoxItem(feature["Zona"].ToString(), feature.GetShape().Clone())); ///PLANCHA
-                };
-            });
-
+            EnsureCombosAreLinked();
+            _ = UpdateComboAsync();
         }
 
-        /// <summary>
-        /// The on comboBox selection change event. 
-        /// </summary>
-        /// <param name="item">The newly selected combo box item</param>
         protected override void OnSelectionChange(ComboBoxItem item)
         {
-            if (item is FeatureComboBoxItem featComboBoxItem)
-            {
-                MapView.Active?.ZoomToAsync(featComboBoxItem.Geometry, TimeSpan.FromSeconds(1.5));               
-            }
-            return;
+            _ = HandleSelectionChangeAsync(item);
         }
 
+        private void EnsureCombosAreLinked()
+        {
+            if (_otherComboBoxes.Count > 0)
+                return;
+
+            var allCombos = new[] { ComboMes, ComboBloque, ComboPlancha }.Where(c => c != null);
+            _otherComboBoxes = allCombos.Where(c => c != this).ToList();
+        }
+
+        private async Task UpdateComboAsync()
+        {
+            Clear();
+
+            var featureLayer = await FindFeatureLayerByNameAsync(LayerName);
+            if (featureLayer == null) return;
+
+            await QueuedTask.Run(() =>
+            {
+                string fieldName = GetCaption();
+                var uniqueValues = new HashSet<string>();
+
+                using var cursor = featureLayer.Search();
+                while (cursor.MoveNext())
+                {
+                    using var feature = cursor.Current as Feature;
+                    var value = feature[fieldName]?.ToString();
+                    if (!string.IsNullOrEmpty(value) && uniqueValues.Add(value))
+                    {
+                        Add(new FeatureComboBoxItem(value, null));
+                    }
+                }
+            });
+        }
+
+        private async Task HandleSelectionChangeAsync(ComboBoxItem item)
+        {
+            ClearOtherSelections();
+
+            if (item is not FeatureComboBoxItem selectedItem)
+                return;
+
+            var geometry = await SelectAndZoomFeaturesAsync(selectedItem.Text);
+            if (geometry != null)
+            {
+                await MapView.Active.ZoomToAsync(geometry, TimeSpan.FromSeconds(1));
+            }
+            else
+            {
+                MessageBox.Show("No se encontraron elementos con el valor seleccionado.");
+            }
+        }
+
+        private void ClearOtherSelections()
+        {
+            foreach (var combo in _otherComboBoxes)
+            {
+                if (combo != null)
+                {
+                    combo.SelectedItem = null;
+                    combo.Clear(); // Borra los ítems del combo también
+                }
+            }
+        }
+
+        private async Task<Geometry> SelectAndZoomFeaturesAsync(string selectedValue)
+        {
+            var featureLayer = await FindFeatureLayerByNameAsync(LayerName);
+            if (featureLayer == null || string.IsNullOrEmpty(selectedValue))
+                return null;
+
+            return await QueuedTask.Run(() =>
+            {
+                string fieldName = GetCaption();
+                var tableDef = featureLayer.GetTable().GetDefinition();
+                var fieldDef = tableDef.GetFields().FirstOrDefault(f => f.Name.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                if (fieldDef == null)
+                    return null;
+
+                bool isNumericField = fieldDef.FieldType is FieldType.Integer or FieldType.Single or FieldType.SmallInteger or FieldType.Double;
+
+                var whereClause = isNumericField
+                    ? $"{fieldName} = {selectedValue}"
+                    : $"{fieldName} = '{selectedValue.Replace("'", "''")}'";
+
+                var queryFilter = new QueryFilter { WhereClause = whereClause };
+                featureLayer.Select(queryFilter, SelectionCombinationMethod.New);
+
+                var extents = new List<Geometry>();
+
+                using var cursor = featureLayer.Search(queryFilter);
+                while (cursor.MoveNext())
+                {
+                    using var feature = cursor.Current as Feature;
+                    var geom = feature?.GetShape();
+                    if (geom != null)
+                        extents.Add(geom.Extent);
+                }
+
+                return extents.Count > 0 ? GeometryEngine.Instance.Union(extents) : null;
+            });
+        }
+
+        private async Task<FeatureLayer> FindFeatureLayerByNameAsync(string layerName)
+        {
+            return await QueuedTask.Run(() =>
+                Project.Current
+                    .GetItems<MapProjectItem>()
+                    .Select(item => item.GetMap())
+                    .SelectMany(map => map.GetLayersAsFlattenedList().OfType<FeatureLayer>())
+                    .FirstOrDefault(fl => fl.Name.Equals(layerName, StringComparison.OrdinalIgnoreCase))
+            );
+        }
+
+        public string GetCaption()
+        {
+            return Caption;
+        }
     }
 }

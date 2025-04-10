@@ -1,6 +1,8 @@
 ﻿
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.Topology;
 using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Core;
@@ -194,27 +196,63 @@ namespace GeoprocessingExecuteAsync
         /// <summary>
         /// Encuentra polígonos menores a 5 ha (ejemplo).
         /// </summary>
-        public async Task FindSmallPolygons()
+        public async Task<List<long>> FindSmallPolygons()
         {
-            await QueuedTask.Run(async () =>
+            List<long> selectedIds = new List<long>();
+
+            await QueuedTask.Run(() =>
             {
                 Utils.SendMessageToDockPane("🔍 Buscando polígonos menores a 5 ha...");
 
-                // Simulación de parámetros, reemplázalos con los reales
-                var parameters = Geoprocessing.MakeValueArray("NombreDeTuCapa", "AREA < 5");
-
-                var gpResult = await Geoprocessing.ExecuteToolAsync("management.SelectLayerByAttribute", parameters);
-
-                if (gpResult.IsFailed)
+                var inputLayer = Utils.GetDynamicLayer("capaCorine");
+                if (inputLayer == null)
                 {
-                    Utils.SendMessageToDockPane($"❌ Error al buscar polígonos pequeños: {gpResult.Messages}");
+                    Utils.SendMessageToDockPane("⚠️ No se encontró la capa 'capaCorine'.");
+                    return;
                 }
-                else
+
+                if (inputLayer.Result is not FeatureLayer featureLayer)
                 {
-                    Utils.SendMessageToDockPane("✅ Búsqueda de polígonos menores a 5 ha completada.");
+                    Utils.SendMessageToDockPane("⚠️ La capa no es un FeatureLayer válido.");
+                    return;
+                }
+
+                string areaFieldName = "area_ha";
+
+                QueryFilter queryFilter = new QueryFilter
+                {
+                    WhereClause = $"{areaFieldName} < 5"
+                };
+
+                using (Selection selection = featureLayer.Select(queryFilter, SelectionCombinationMethod.New, null, null, null))
+                {
+                    int selectedCount = (int)selection.GetCount();
+                    if (selectedCount == 0)
+                    {
+                        Utils.SendMessageToDockPane("⚠️ No se encontraron polígonos menores a 5 ha.");
+                    }
+                    else
+                    {
+                        Utils.SendMessageToDockPane($"✅ Se seleccionaron {selectedCount} polígonos menores a 5 ha.");
+
+                        // Obtener los ObjectIDs de los features seleccionados
+                        using (RowCursor cursor = selection.Search())
+                        {
+                            while (cursor.MoveNext())
+                            {
+                                using (Row row = cursor.Current)
+                                {
+                                    selectedIds.Add(row.GetObjectID());
+                                }
+                            }
+                        }
+                    }
                 }
             });
+
+            return selectedIds;
         }
+
 
         /// <summary>
         /// Ejecuta el cálculo de prioridad
