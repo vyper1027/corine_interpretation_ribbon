@@ -14,7 +14,7 @@ namespace ProAppModule2
 {
     internal class SelectFeature : ComboBox
     {
-        private const string LayerName = "Asig_2024_Pruebas";
+        private const string LayerName = "Area_corte_periodos";
 
         // Referencias estáticas a los combos
         public static SelectFeature ComboMes { get; private set; }
@@ -165,8 +165,8 @@ namespace ProAppModule2
         }
 
         public string GetCaption()
-        {
-            return Caption;
+        {            
+            return Tooltip;
         }
     }
 }

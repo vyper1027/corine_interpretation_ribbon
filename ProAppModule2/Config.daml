@@ -4,7 +4,7 @@
     <Name>ProAppModule2</Name>
     <Description>ProAppModule2 description</Description>
     <Image>Images\AddinDesktop32.png</Image>
-    <Author>ASUS</Author>
+    <Author>Christrings</Author>
     <Company>Acme</Company>
     <Date>18/09/2024 11:20:56</Date>
     <Subject>Framework</Subject>
@@ -62,6 +62,7 @@
 		  <group refID="ProAppModule2_Group10" />
 		  <group refID="ProAppModule2_Group11" />
 		  <group refID="ProAppModule2_Group12" />
+		  <group refID="ProAppModule2_Group13" />
 		</tab>
       </tabs>
       <groups>
@@ -78,8 +79,8 @@
 		  
         <group id="ComboBoxShowingLayers_Group1" caption="Seleccion" keytip="G0" appearsOnAddInTab="true">
           <!-- host controls within groups -->
-          <comboBox refID="ComboBoxShowingLayers_SelectMes" />
 		  <comboBox refID="ComboBoxShowingLayers_SelectBloque" />
+          <comboBox refID="ComboBoxShowingLayers_SelectMes" />		  
 		  <comboBox refID="ComboBoxShowingLayers_SelectPlancha" />
 
 		  <tool refID="ProAppModule2_MapTool1" size="large" />
@@ -140,7 +141,7 @@
           <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
           <editBox refID="ProAppModule2_Revision" size="middle" />
         </group>
-		<group id="ProAppModule2_Group9" caption="Generalizacion CLC" appearsOnAddInTab="true">
+		<group id="ProAppModule2_Group9" caption="Informacion del Proceso" appearsOnAddInTab="true">
 			  <!-- host controls within groups -->
 			<!--<button refID="ProAppModule2_StartCorineAnalysis" size="large" />-->
 		    <button refID="ProAppModule2_DockpaneCorineAnalysis_ShowButton" size="large" />
@@ -161,28 +162,33 @@
 		<group id="ProAppModule2_Group12" caption="Conformidad del archivo" appearsOnAddInTab="true">			
 			<button refID="ProAppModule2_Validate_Corine_Layer" size="large"/>
 		</group>
+
+		<group id="ProAppModule2_Group13" caption="Validar topologia" appearsOnAddInTab="true">
+			 <button refID="ProAppModule2_Validate_Corine_Layer_Topology" size="large"/>
+		</group>
 	  </groups>
 		
       <controls>
         <!-- add your controls here -->
         <button id="ProAppModule2_Button1" caption="Info" className="UI.Buttons.Button1" loadOnClick="true" smallImage="MetadataDocument16" largeImage="MetadataDocument32">
           <tooltip heading="Tooltip Heading">Informacion URL<disabledText /></tooltip>
-        </button>
+        </button>       
 		  
-        <comboBox id="ComboBoxShowingLayers_SelectMes" caption="MES_INTER" className="SelectFeature" keytip="X1" editHint="Zoom a periodo de entrega" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
-          <tooltip heading="Select State Feature">
-				Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText /></tooltip>
-        </comboBox>
-		  
-		<comboBox id="ComboBoxShowingLayers_SelectBloque" caption="BLOQUE" className="SelectFeature" keytip="X2" editHint="Zoom a Bloque" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+		<comboBox id="ComboBoxShowingLayers_SelectBloque" caption="Bloque" className="SelectFeature" keytip="X2" editHint="Zoom a Bloque" itemWidth="140" extendedCaption="Bloque" isEditable="false" isReadOnly="true" resizable="true">
 			<tooltip heading="Select State Feature">
-			 Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText />
+				Bloque<disabledText />
 			</tooltip>
 		</comboBox>
 
-		<comboBox id="ComboBoxShowingLayers_SelectPlancha" caption="PLANCHA" className="SelectFeature" keytip="X3" editHint="Zoom a Plancha" itemWidth="140" extendedCaption="" isEditable="false" isReadOnly="true" resizable="true">
+		<comboBox id="ComboBoxShowingLayers_SelectMes" caption="Mes" className="SelectFeature" keytip="X1" editHint="Zoom a periodo de entrega" itemWidth="140" extendedCaption="Mes_Interpretacion" isEditable="false" isReadOnly="true" resizable="true">
+			<tooltip heading="Select State Feature">
+				Mes_Interpretacion<disabledText />
+			</tooltip>
+		</comboBox>  
+
+		<comboBox id="ComboBoxShowingLayers_SelectPlancha" caption="Plancha" className="SelectFeature" keytip="X3" editHint="Zoom a Plancha" itemWidth="140" extendedCaption="Plancha" isEditable="false" isReadOnly="true" resizable="true">
 		     <tooltip heading="Select State Feature">
-				 Shows a dropdown list of Features that allows to Select a Feature (Idc) and to zoom to the select Feature<disabledText />
+				 Plancha<disabledText />
 			 </tooltip>
 		</comboBox>
 		  
@@ -214,7 +220,7 @@
 		  checkedCondition="Control_Topology_cond"		  
 		  loadOnClick="true">
 	      <tooltip heading="Validación de Topología">
-		        Activa o desactiva la validación de topología en la capa seleccionada.
+		        Activa o desactiva la validación de topología de la capa corine en la Ventana2 (unicamente se valida el extent actual).
 				  <disabledText />
 		  </tooltip>
 		</checkBox>
@@ -242,7 +248,7 @@
 		  
         <button id="ProAppModule2_CltArea" caption="Calcular Area" className="UI.Buttons.CltArea" loadOnClick="true" smallImage="MeasureArea16" largeImage="MeasureArea32">
           <tooltip heading="Tooltip Heading">
-				Calcular area poligonos seleccionados<disabledText /></tooltip>
+				Muestra en el area de todos los poligonos seleccionados en el panel de resultados<disabledText /></tooltip>
         </button>
 
 		<!--<button id="ProAppModule2_StartCorineAnalysis" caption="Analisis" className="" loadOnClick="true" smallImage="ValidateExtent16" largeImage="ValidateExtent32">
@@ -281,11 +287,17 @@
 			<tooltip heading="Abrir en Esri">Abrir en Esri<disabledText /></tooltip>			
 		</tool>
 		  
-		<button id="ProAppModule2_Validate_Corine_Layer" caption="Validar Capa Corine" className="UI.Buttons.ValidateLayerButton" loadOnClick="true" smallImage="DataReviewerBatchChecksAdd16" largeImage="DataReviewerBatchChecksAdd32">
-			<tooltip heading="validar capa corine">
+		<button id="ProAppModule2_Validate_Corine_Layer" keytip="z2" caption="Validar Capa Corine" className="UI.Buttons.ValidateLayerButton" loadOnClick="true" smallImage="DataReviewerBatchChecksAdd16" largeImage="DataReviewerBatchChecksAdd32">
+			<tooltip heading="Valida los atributos minimos y la referencia espacial de la capa de entrega (asignacion)">
 				Conformidad del archivo<disabledText />
 			</tooltip>
 		</button>
+
+		 <button id="ProAppModule2_Validate_Corine_Layer_Topology" keytip="z2" caption="Validar Topologia" className="UI.Buttons.ValidateTopologyButton" loadOnClick="true" smallImage="GeodatabaseTopology16" largeImage="GeodatabaseTopology32">
+			 <tooltip heading="Valida la topologia de toda la capa corine (asignacion) en la Ventana2">
+				 <disabledText />
+			 </tooltip>
+		 </button>
 	  </controls>
 		
       <dockPanes>

@@ -59,7 +59,7 @@ namespace ProAppModule2.UI.Buttons
 
                 await Project.Current.SetIsEditingEnabledAsync(true);
                 // Get the name of the attribute to update, and the value to set:
-                string attributename = "Estado";
+                string attributename = "estado";
                 //attributename = attributename.ToUpper();
                 string setvalue = "Eliminado";
 

@@ -81,7 +81,7 @@ namespace ProAppModule2.UI.Buttons
 
                 //selectedFeatureID = featSelectionOIDs.ToList()[0];
                 // Get the name of the attribute to update, and the value to set:
-                string attributename = "Estado";
+                string attributename = "estado";
                 string setvalue = "Aprobado";
 
                 // 📌 Mensaje inicial con la información de los registros a actualizar
@@ -187,7 +187,7 @@ namespace ProAppModule2.UI.Buttons
                                     rowBuffer["cambio"] = 2;
                                     rowBuffer["codigo"] = row["codigo"];
                                     rowBuffer["confiabili"] = null;
-                                    rowBuffer["insumo"] = row["insumo"];
+                                    rowBuffer["apoyo"] = row["apoyo"];
                                     rowBuffer["horaAprobacion"] = DateTime.Now;
                                     rowBuffer["apoyo"] = null;
 

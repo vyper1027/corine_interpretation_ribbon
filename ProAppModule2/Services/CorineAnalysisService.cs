@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.Topology;
 using ArcGIS.Core.Geometry;
@@ -10,6 +11,7 @@ using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using ProAppModule2;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 namespace GeoprocessingExecuteAsync
 {
@@ -18,55 +20,77 @@ namespace GeoprocessingExecuteAsync
         /// <summary>
         /// Ejecuta la validación de topología de la capa Corine (Capa destino)
         /// </summary>
-        public static async Task ValidateAllLayerTopology()
+    public static async Task ValidateAllLayerTopology()
+    {
+        await QueuedTask.Run(async () =>
         {
-            await QueuedTask.Run(async () =>
+            // ✅ Obtener la capa de topología
+            var topologyLayer = await Utils.GetTopologyLayer();
+
+            if (topologyLayer == null)
             {
-                // ✅ Obtener la capa de topología
-                var topologyLayer = await Utils.GetTopologyLayer();
+                Utils.SendMessageToDockPane("❌ No se encontró una capa de topología en el mapa.");
+                return;
+            }
 
-                if (topologyLayer == null)
+            Utils.SendMessageToDockPane($"✅ Ejecutando validación de topología en toda la capa: {topologyLayer.Name}");
+
+            // ✅ Obtener el objeto de Topology
+            Topology topology = topologyLayer.GetTopology();
+            if (topology == null)
+            {
+                Utils.SendMessageToDockPane("❌ No se pudo obtener la topología desde el layer.");
+                return;
+            }
+
+            // ⚠ Confirmar guardado de ediciones pendientes
+            if (Project.Current.HasEdits)
+            {
+                bool shouldSave = false;
+
+                // Mostrar cuadro de diálogo para confirmar guardado
+                await QueuedTask.Run(() =>
                 {
-                    Utils.SendMessageToDockPane("❌ No se encontró una capa de topología en el mapa.");
+                    var result = MessageBox.Show(
+                        "Hay ediciones pendientes. ¿Deseas guardar los cambios antes de validar la topología?",
+                        "Guardar ediciones",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+
+                    shouldSave = (result == MessageBoxResult.Yes);
+                });
+
+                if (!shouldSave)
+                {
+                    Utils.SendMessageToDockPane("❌ Validación cancelada por el usuario para evitar guardar cambios.");
                     return;
                 }
 
-                Utils.SendMessageToDockPane($"✅ Ejecutando validación de topología en toda la capa: {topologyLayer.Name}");
+                Utils.SendMessageToDockPane("💾 Guardando cambios antes de validar...");
+                await Project.Current.SaveEditsAsync();
+            }
 
-                // ✅ Obtener el objeto de Topology
-                Topology topology = topologyLayer.GetTopology();
-                if (topology == null)
-                {
-                    Utils.SendMessageToDockPane("❌ No se pudo obtener la topología desde el layer.");
-                    return;
-                }
+            // 📏 Obtener el extent completo de la topología
+            Envelope fullExtent = topology.GetExtent();
 
-                // ✅ Guardar cambios antes de validar
-                if (Project.Current.HasEdits)
-                {
-                    Utils.SendMessageToDockPane("⚠ Hay ediciones pendientes. Guardando cambios...");
-                    await Project.Current.SaveEditsAsync();
-                }
+            // 🔍 Validar la topología en toda la capa
+            ValidationResult result = topology.Validate(new ValidationDescription(fullExtent));
 
-                Envelope fullExtent = topology.GetExtent();
-
-                // 🔍 **Validar la topología en toda la capa**
-                ValidationResult result = topology.Validate(new ValidationDescription(fullExtent));
-
-                // ✅ Verificar si hay errores topológicos
-                if (result.AffectedArea != null && !result.AffectedArea.IsEmpty)
-                {
-                    Utils.SendMessageToDockPane($"⚠ Se encontraron errores de topología en la capa: {result.AffectedArea.ToJson()}");
-                }
-                else
-                {
-                    Utils.SendMessageToDockPane("✅ No se encontraron errores de topología en la capa.");
-                }
-            });
-        }
+            // ✅ Verificar si hay errores topológicos
+            if (result.AffectedArea != null && !result.AffectedArea.IsEmpty)
+            {
+                Utils.SendMessageToDockPane($"⚠ Se encontraron errores de topología en la capa: {result.AffectedArea.ToJson()}");
+            }
+            else
+            {
+                Utils.SendMessageToDockPane("✅ No se encontraron errores de topología en la capa.");
+            }
+        });
+    }
 
 
-        public static async Task ValidateCurrentExtentTopology()
+
+    public static async Task ValidateCurrentExtentTopology()
         {
             await QueuedTask.Run(async () =>
             {

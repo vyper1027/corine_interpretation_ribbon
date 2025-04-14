@@ -197,7 +197,7 @@ namespace ProAppModule2
                 string pattern = layerType switch
                 {
                     "vectoresDeCambio" => @"^Cambios_\d{2}_\d{2}$",
-                    "capaCorine" => @"^CLC\d{4}_B\d+_asignacion$",
+                    "capaCorine" => @"^CLC\d{4}_[A-Z]\d+_asignacion$",
                     _ => null
                 };
 
@@ -229,19 +229,16 @@ namespace ProAppModule2
         public static async Task<TopologyLayer> GetTopologyLayer()
         {
             return await QueuedTask.Run(() =>
-            {
-                // Obtener todas las ventanas de mapa abiertas
+            {               
                 var mapPanes = FrameworkApplication.Panes.OfType<IMapPane>().ToList();
                 if (mapPanes.Count == 0) return null;
-
-                // Buscar la ventana 2 donde debería estar la capa de topología
+                
                 IMapPane targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana2"));
 
                 if (targetPane == null || targetPane.MapView == null) return null;
-
-                // Obtener todas las capas y buscar la de topología
+                
                 var layers = targetPane.MapView.Map.GetLayersAsFlattenedList();
-                //return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name == "Cobertura_Corine_Topologia");
+                
                 return layers.OfType<TopologyLayer>().FirstOrDefault(tl => tl.Name.Contains("Topology"));
             });
         }

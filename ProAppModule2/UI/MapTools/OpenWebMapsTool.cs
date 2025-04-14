@@ -1,68 +1,43 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
-using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Mapping;
-using ArcGIS.Desktop.Framework.Threading.Tasks;
 using System.Windows;
-using System.Diagnostics;
-using System.Security.Policy;
+using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Framework.Threading.Tasks;
+using ArcGIS.Desktop.Mapping;
 
 namespace ProAppModule2.UI.MapTools
 {
-    /// <summary>
-    /// Class providing the behavior for the custom map tool.
-    /// </summary>
     internal class OpenWebMapsTool : MapTool
     {
         public OpenWebMapsTool()
-        {            
-            // Set the tools OverlayControlID to the DAML id of the embeddable control
+        {
             OverlayControlID = "MapToolWithOverlayControl_EmbeddableControl";
-            // Embeddable control can be resized
             OverlayControlCanResize = true;
-            // Specify ratio of 0 to 1 to place the control
             OverlayControlPositionRatio = new Point(0, 0.95); // bottom left
         }
 
         protected override void OnToolMouseDown(MapViewMouseButtonEventArgs e)
         {
-            // En este caso, no estamos manejando nada en el MouseDown, solo necesitamos capturar el clic
             if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
                 e.Handled = true;
         }
 
-        /// <summary>
-        /// Called when the OnToolMouseDown event is handled. Allows the opportunity to perform asynchronous operations corresponding to the event.
-        /// </summary>
         protected override Task HandleMouseDownAsync(MapViewMouseButtonEventArgs e)
-        {            
-            // Obtener las coordenadas del clic y mostrarlas en un MessageBox
+        {
             return QueuedTask.Run(() =>
             {
                 var mapPoint = ActiveMapView.ClientToMap(e.ClientPoint);
                 var coords = GeometryEngine.Instance.Project(mapPoint, SpatialReferences.WGS84) as MapPoint;
-                if (coords == null) return;
+                if (coords == null)
+                    return;
 
-                var sb = new StringBuilder();
-                sb.AppendLine($"X: {coords.X:0.000}");
-                sb.Append($"Y: {coords.Y:0.000}");
-                if (coords.HasZ)
-                {
-                    sb.AppendLine();
-                    sb.Append($"Z: {coords.Z:0.000}");
-                }
-
-                // Mostrar las coordenadas en un MessageBox
                 string url = GenerateUrl(this.Caption, coords);
-
                 if (!string.IsNullOrEmpty(url))
                 {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = url,
-                        UseShellExecute = true
-                    });
+                    OpenInBrowser(url);
                 }
                 else
                 {
@@ -71,35 +46,37 @@ namespace ProAppModule2.UI.MapTools
             });
         }
 
-        private string GenerateUrl(string caption, MapPoint coords)
+        private static void OpenInBrowser(string url)
         {
-            string url = string.Empty;
-
-            switch (caption)
+            try
             {
-                case "Abrir en Google":
-                    url = $"https://www.google.com/maps/@{coords.Y},{coords.X},15z";
-                    break;
-
-                case "Abrir en Bing":
-                    url = $"https://www.bing.com/maps?lvl=17&style=h&cp={coords.Y}~{coords.X}";
-                    break;
-
-                case "Abrir en Esri":
-                    url = $"https://www.arcgis.com/apps/mapviewer/index.html?" +
-                          $"basemapUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FWorld_Imagery%2FMapServer" +
-                          $"&basemapReferenceUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FReference%2FWorld_Boundaries_and_Places%2FMapServer" +
-                          $"&center={coords.X}%2C{coords.Y}" +
-                          $"&level=15";
-                    break;
-
-                default:
-                    Debug.WriteLine("Caption desconocido: " + caption);
-                    break;
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
             }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error al abrir el navegador: {ex.Message}");
+            }
+        }
 
-            return url;
+        private static string GenerateUrl(string caption, MapPoint coords)
+        {
+            string y = coords.Y.ToString(CultureInfo.InvariantCulture);
+            string x = coords.X.ToString(CultureInfo.InvariantCulture);
+
+            return caption switch
+            {
+                "Abrir en Google" => $"https://www.google.com/maps/@{y},{x},13z",
+                "Abrir en Bing" => $"https://www.bing.com/maps?lvl=13&style=h&cp={y}~{x}",
+                "Abrir en Esri" => $"https://www.arcgis.com/apps/mapviewer/index.html?" +
+                                  "basemapUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FWorld_Imagery%2FMapServer" +
+                                  "&basemapReferenceUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FReference%2FWorld_Boundaries_and_Places%2FMapServer" +
+                                  $"&center={x}%2C{y}&level=13",
+                _ => null
+            };
         }
     }
 }
-
