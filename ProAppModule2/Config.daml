@@ -16,32 +16,17 @@
     <insertCondition id="Tab_Toggle_condition" caption="Toggle Tab">
       <!-- our condition is set true or false based on this underlying state -->
       <state id="tab_state" />
-    </insertCondition>
-	  
-    <insertCondition id="Control_editg_cond" caption="Toggle Controls">
-      <!-- our condition is set true or false based on this underlying state -->
-      <state id="controls_state" />
-    </insertCondition>
+    </insertCondition>   
 
 	<insertCondition id="Control_Topology_cond" caption="Toggle Controls">
 		<!-- our condition is set true or false based on this underlying state -->
 		<state id="extent_topology_state" />
-	</insertCondition>
-	  
-    <insertCondition id="Control_editat_cond" caption="Toggle ControlsAtb">
-      <!-- our condition is set true or false based on this underlying state -->
-      <state id="controls_atb" />
-    </insertCondition>
+	</insertCondition> 
 	  
     <insertCondition id="Control_editbox" caption="Toggle Controlebox">
       <!-- our condition is set true or false based on this underlying state -->
       <state id="controls_edbox" />
-    </insertCondition>
-	  
-    <insertCondition id="Control_createg_cond" caption="Toggle ControlCrt">
-      <!-- our condition is set true or false based on this underlying state -->
-      <state id="controls_crtng" />
-    </insertCondition>	  
+    </insertCondition>   	  
   </conditions>
 	
   <modules>
@@ -52,10 +37,7 @@
           <group refID="ProAppModule2_Group1" />
           <group refID="ComboBoxShowingLayers_Group1" />
           <group refID="ProAppModule2_Group2" />
-          <group refID="ProAppModule2_Group3" />
-          <group refID="ProAppModule2_Group4" />
-          <group refID="ProAppModule2_Group5" />
-          <group refID="ProAppModule2_Group6" />
+          <group refID="ProAppModule2_Group3" />                     
           <group refID="ProAppModule2_Group7" />
           <group refID="ProAppModule2_Group8" />
 		  <group refID="ProAppModule2_Group9" />
@@ -87,72 +69,40 @@
 		  <button refID="ProAppModule2_Clear_Selection_Button" size="large" />			
 		</group>
 		  
-        <group id="ProAppModule2_Group2" caption="Revision" appearsOnAddInTab="true">
+        <group id="ProAppModule2_Group2" caption="Revision y Edicion" appearsOnAddInTab="true">
           <!-- host controls within groups -->
 		  <checkBox refID="ProAppModule2_Toggle_Topology_CheckBox" size="middle"/>	
           <button refID="ProAppModule2_Approvefeat" size="middle" />		    
           <button refID="ProAppModule2_Deletefeat" size="middle" />
-			
-          <button refID="ProAppModule2_Editgeo" size="large" />
-          <button refID="ProAppModule2_Editatb" size="large" />
-          <button refID="ProAppModule2_Creategeo" size="large" />
-          
-			
-			<!-- <button refID="esri_editing_ToggleEditingBtn" />	
-		  <button refID="esri_editing_ShowEditFeaturesBtn" />
-		  <button refID="esri_editing_ShowCreateFeaturesBtn" />
-          <button refID="esri_editing_SaveEditsBtn" />
-          <button refID="esri_editing_DiscardEditsBtn" />-->
+		  <button refID="esri_editing_ShowEditFeaturesBtn" size="middle"/>
+		  <button refID="esri_editing_ShowAttributes" size="middle"/>
+		  <button refID="esri_editing_ShowCreateFeaturesBtn" size="middle"/>			
         </group>
-        <group id="ProAppModule2_Group3" caption="Guardado" appearsOnAddInTab="true">
-          <!-- host controls within groups -->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	
-		  <button refID="esri_editing_ShowEditFeaturesBtn" />
-		  <button refID="esri_editing_ShowCreateFeaturesBtn" />-->
+		  
+        <group id="ProAppModule2_Group3" caption="Guardado" appearsOnAddInTab="true">          
           <button refID="esri_editing_SaveEditsBtn" />
           <button refID="esri_editing_DiscardEditsBtn" />
+        </group>      
+		  
+        <group id="ProAppModule2_Group7" caption="Revision" appearsOnAddInTab="true">         
+          <button refID="ProAppModule2_Reviewer" size="large" />          
         </group>
-        <group id="ProAppModule2_Group4" caption="Edicion Geometrica" appearsOnAddInTab="false" condition="Control_editg_cond">
-          <!-- host controls within groups -->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
-          <button refID="esri_editing_ShowEditFeaturesBtn" />
-          <!--<button refID="esri_editing_ShowCreateFeaturesBtn" />
-		  <button refID="esri_editing_SaveEditsBtn" />
-		  <button refID="esri_editing_DiscardEditsBtn" />-->
-        </group>
-        <group id="ProAppModule2_Group5" caption="Edicion Atributos" appearsOnAddInTab="false" condition="Control_editat_cond">
-          <!--<editBox refID="ProAppModule2_Clase2018" size="middle" />-->
-          <button refID="esri_editing_ShowAttributes" />
-        </group>
-        <group id="ProAppModule2_Group6" caption="Crear Geometria" appearsOnAddInTab="false" condition="Control_createg_cond">
-          <!-- host controls within groups -->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
-          <button refID="esri_editing_ShowCreateFeaturesBtn" />
-        </group>
-        <group id="ProAppModule2_Group7" caption="Revisar Proceso" appearsOnAddInTab="true">
-          <!-- host controls within groups -->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
-          <button refID="ProAppModule2_Reviewer" size="large" />
-          <!--<editBox refID="ProAppModule2_Revision" size="middle" />"-->
-        </group>
-        <group id="ProAppModule2_Group8" caption="Validacion" appearsOnAddInTab="false" condition="Control_editbox">
-          <!-- host controls within groups -->
-          <!-- <button refID="esri_editing_ToggleEditingBtn" />	-->
+		  
+        <group id="ProAppModule2_Group8" caption="Validacion" appearsOnAddInTab="false" condition="Control_editbox">         
           <editBox refID="ProAppModule2_Revision" size="middle" />
         </group>
-		<group id="ProAppModule2_Group9" caption="Informacion del Proceso" appearsOnAddInTab="true">
-			  <!-- host controls within groups -->
-			<!--<button refID="ProAppModule2_StartCorineAnalysis" size="large" />-->
+		  
+		<group id="ProAppModule2_Group9" caption="Info del Proceso" appearsOnAddInTab="true">			
 		    <button refID="ProAppModule2_DockpaneCorineAnalysis_ShowButton" size="large" />
 		</group>
+		  
 		<group id="ProAppModule2_Group10" caption="Editar Capa" appearsOnAddInTab="true">
 			<!-- host controls within groups -->
 			<button refID="ProAppModule2_Split_Feature_Button" size="large" />
 			<button refID="ProAppModule2_Merge_Feature_Button" size="large" />
 			<button refID="ProAppModule2_Explode_Feature_Button" size="large" />			
 		</group>
-		<group id="ProAppModule2_Group11" caption="Evaluar en Mapa Externo" appearsOnAddInTab="true">
+		<group id="ProAppModule2_Group11" caption="Mapa Externo" appearsOnAddInTab="true">
 			<!-- host controls within groups -->
 			<tool refID="ProAppModule2_Open_Webmap_Bing_Button" size="middle" />
 			<tool refID="ProAppModule2_Open_Webmap_Google_Button" size="middle" />
@@ -174,19 +124,19 @@
           <tooltip heading="Tooltip Heading">Informacion URL<disabledText /></tooltip>
         </button>       
 		  
-		<comboBox id="ComboBoxShowingLayers_SelectBloque" caption="Bloque" className="SelectFeature" keytip="X2" editHint="Zoom a Bloque" itemWidth="140" extendedCaption="Bloque" isEditable="false" isReadOnly="true" resizable="true">
+		<comboBox id="ComboBoxShowingLayers_SelectBloque" caption="Bloque" className="ProAppModule2.UI.ComboBoxes.SelectFeature" keytip="X2" editHint="Zoom a Bloque" itemWidth="140" extendedCaption="Bloque" isEditable="false" isReadOnly="true" resizable="true">
 			<tooltip heading="Select State Feature">
 				Bloque<disabledText />
 			</tooltip>
 		</comboBox>
 
-		<comboBox id="ComboBoxShowingLayers_SelectMes" caption="Mes" className="SelectFeature" keytip="X1" editHint="Zoom a periodo de entrega" itemWidth="140" extendedCaption="Mes_Interpretacion" isEditable="false" isReadOnly="true" resizable="true">
+		<comboBox id="ComboBoxShowingLayers_SelectMes" caption="Mes" className="ProAppModule2.UI.ComboBoxes.SelectFeature" keytip="X1" editHint="Zoom a periodo de entrega" itemWidth="140" extendedCaption="Mes_Interpretacion" isEditable="false" isReadOnly="true" resizable="true">
 			<tooltip heading="Select State Feature">
 				Mes_Interpretacion<disabledText />
 			</tooltip>
 		</comboBox>  
 
-		<comboBox id="ComboBoxShowingLayers_SelectPlancha" caption="Plancha" className="SelectFeature" keytip="X3" editHint="Zoom a Plancha" itemWidth="140" extendedCaption="Plancha" isEditable="false" isReadOnly="true" resizable="true">
+		<comboBox id="ComboBoxShowingLayers_SelectPlancha" caption="Plancha" className="ProAppModule2.UI.ComboBoxes.SelectFeature" keytip="X3" editHint="Zoom a Plancha" itemWidth="140" extendedCaption="Plancha" isEditable="false" isReadOnly="true" resizable="true">
 		     <tooltip heading="Select State Feature">
 				 Plancha<disabledText />
 			 </tooltip>
@@ -223,22 +173,9 @@
 		        Activa o desactiva la validación de topología de la capa corine en la Ventana2 (unicamente se valida el extent actual).
 				  <disabledText />
 		  </tooltip>
-		</checkBox>
-
-
-		  <button id="ProAppModule2_Editgeo" caption="Editar Geometria" className="UI.Buttons.Editgeo" loadOnClick="true" smallImage="EditingSketchTool16" largeImage="EditingSketchTool32">
-          <tooltip heading="Tooltip Heading">Editar Geometria Poligono de Cambio seleccionado<disabledText /></tooltip>
-        </button>
+		</checkBox>       
 		  
-        <button id="ProAppModule2_Editatb" caption="Editar Atributos" className="UI.Buttons.Editatb" loadOnClick="true" smallImage="EditingAdjustmentAttributeTransferMapping16" largeImage="EditingAdjustmentAttributeTransferMapping32">
-          <tooltip heading="Tooltip Heading">Editar Atributos Poligono de Cambio seleccionado<disabledText /></tooltip>
-        </button>
-		  
-        <editBox id="ProAppModule2_Clase2018" caption="Clase 2018: " className="ModValueToSetcl2018" sizeString="AAAAAAAAAAAAAAAAA" condition="Control_editbox"></editBox>
-		  
-        <button id="ProAppModule2_Creategeo" caption="Agregar Poligono" className="UI.Buttons.Creategeo" loadOnClick="true" smallImage="EditingTemplateNewGroup16" largeImage="EditingTemplateNewGroup32">
-          <tooltip heading="Tooltip Heading">Crear Nuevo Poligono de Cambio<disabledText /></tooltip>
-        </button>
+        <editBox id="ProAppModule2_Clase2018" caption="Clase 2018: " className="ModValueToSetcl2018" sizeString="AAAAAAAAAAAAAAAAA" condition="Control_editbox"></editBox>      
 		  
         <button id="ProAppModule2_Reviewer" caption="Validar" className="UI.Buttons.Reviewer" loadOnClick="true" smallImage="ReviewerReadytoUseRules16" largeImage="ReviewerReadytoUseRules32">
           <tooltip heading="Tooltip Heading">Tooltip text<disabledText /></tooltip>
@@ -263,7 +200,7 @@
 		    </tooltip>
 		</button>
 
-		<tool id="ProAppModule2_Split_Feature_Button" caption="Cortar Poligono" className="UI.MapTools.SplitTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EditingSplitFeaturesTool16" largeImage="EditingSplitFeaturesTool32">
+		<tool id="ProAppModule2_Split_Feature_Button" caption="Cortar Poligono" className="UI.MapTools.SplitTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EditCut16" largeImage="EditCut32">
 			<tooltip heading="Cortar poligono">	Cortar poligono<disabledText />	</tooltip>
 		</tool>
 		  

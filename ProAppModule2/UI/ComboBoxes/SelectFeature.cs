@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ArcGIS.Desktop.Framework.Dialogs;
 
-namespace ProAppModule2
+namespace ProAppModule2.UI.ComboBoxes
 {
     internal class SelectFeature : ComboBox
     {
@@ -165,7 +165,7 @@ namespace ProAppModule2
         }
 
         public string GetCaption()
-        {            
+        {
             return Tooltip;
         }
     }
