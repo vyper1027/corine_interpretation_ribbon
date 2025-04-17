@@ -86,6 +86,9 @@ namespace ProAppModule2.UI.Buttons
                         Utils.SendMessageToDockPane("Actualizacion Completada.", true);
                         Utils.SendMessageToDockPane("El registro fue eliminado", true);
                         MapView.Active.Map.ClearSelection();
+
+                        featLayer.SetDefinitionQuery("estado = 'Por Revisar' OR estado = 'Aprobado'");
+
                     }
                     else
                     {

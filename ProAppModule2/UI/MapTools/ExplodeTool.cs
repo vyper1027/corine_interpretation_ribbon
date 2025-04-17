@@ -16,6 +16,16 @@ namespace ProAppModule2.UI.MapTools
     {
         public ExplodeTool() : base()
         {
+            // Ejecutar la operación de limpieza de selección en el hilo adecuado.
+            QueuedTask.Run(() =>
+            {
+                MapView mapView = MapView.Active;
+                if (mapView != null)
+                {
+                    mapView.Map?.SetSelection(null); // Limpiar cualquier selección activa
+                }
+            });
+
             SketchType = SketchGeometryType.Rectangle;
             IsSketchTool = true;
             SketchOutputMode = SketchOutputMode.Map;
@@ -23,12 +33,13 @@ namespace ProAppModule2.UI.MapTools
             Utils.SendMessageToDockPane("Herramienta de explosión activada. Dibuje una línea para seleccionar polígonos.");
         }
 
+
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
             Utils.SendMessageToDockPane("Selección completada. Iniciando proceso de explosión...");
             return QueuedTask.Run(() => ExecuteExplodeAsync(geometry));
         }
-        
+
         protected async Task<bool> ExecuteExplodeAsync(Geometry geometry)
         {
             if (geometry == null)
@@ -106,10 +117,15 @@ namespace ProAppModule2.UI.MapTools
                                 var polyGeometry = feature.GetShape() as Polygon;
                                 if (polyGeometry == null) continue;
 
+                                var systemFields = new HashSet<string> { "OBJECTID", "Shape_Length", "Shape_Area", "Shape" };
+                                var originalAttributes = feature.GetFields()
+                                    .Where(f => !systemFields.Contains(f.Name))  // Excluir los campos del sistema
+                                    .ToDictionary(f => f.Name, f => feature[f.Name]);
+
                                 foreach (var part in polyGeometry.Parts)
                                 {
                                     var newPolygon = PolygonBuilder.CreatePolygon(part);
-                                    splitOperation.Create(editableLayer, newPolygon);
+                                    splitOperation.Create(editableLayer, newPolygon, originalAttributes);                                    
                                 }
 
                                 // Eliminar el polígono original después de crear los nuevos

@@ -324,7 +324,10 @@ namespace ProAppModule2.UI.Buttons
                         {
                             if (entry.Value != null && !entry.Value.IsEmpty)
                             {
-                                editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> { { "SHAPE", entry.Value } });
+                                editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> { 
+                                    { "SHAPE", entry.Value    },
+                                    { "cambio", 2 }
+                                });
                                 affectedFeatureIds.Add(entry.Key);
                             }
                         }
