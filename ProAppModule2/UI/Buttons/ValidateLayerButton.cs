@@ -8,6 +8,7 @@ namespace ProAppModule2.UI.Buttons
         protected override async void OnClick()
         {
             await LayerValidationService.ValidateLayerConformity();
+            await LayerValidationService.ValidateNullFields();
         }
     }
 }

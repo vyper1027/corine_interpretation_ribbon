@@ -51,7 +51,14 @@ namespace ProAppModule2.UI.MapTools
                     return;
                 }
 
-                activeMapView.SelectFeatures(geometry);
+                // Detectar si la tecla Shift está presionada
+                var combinationMethod = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift)
+                    ? SelectionCombinationMethod.Add
+                    : SelectionCombinationMethod.New;
+
+                // Aplicar selección con el método correspondiente
+                activeMapView.SelectFeatures(geometry, combinationMethod);
+
                 var results = activeMapView.GetFeatures(geometry);
 
                 if (results.Count == 0)

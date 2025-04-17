@@ -50,9 +50,23 @@ namespace ProAppModule2.UI.DockPanes
             InspectorView = icontrol.Item2;
 
             SaveCommand = new RelayCommand(async () => await GuardarCambios(), () => _attributeInspector.HasAttributes);
-
-
+            
+            System.Windows.Input.Keyboard.AddKeyDownHandler(System.Windows.Application.Current.MainWindow, OnKeyDown);
         }
+
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Control) &&
+                FrameworkApplication.DockPaneManager.Find(_dockPaneID)?.IsVisible == true)
+            {
+                if (SaveCommand.CanExecute(null))
+                {
+                    SaveCommand.Execute(null);
+                    e.Handled = true;
+                }
+            }
+        }
+
         #region Properties
         public Inspector AttributeInspector
         {

@@ -9,19 +9,24 @@
              d:DesignHeight="300" d:DesignWidth="300"
              d:DataContext="{Binding Path=UI.DockPanes.CustomDockpaneViewModel}">
 
-    <UserControl.Resources>
+    <!--<UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <extensions:DesignOnlyResourceDictionary Source="pack://application:,,,/ArcGIS.Desktop.Framework;component\Themes\Default.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </UserControl.Resources>
+    </UserControl.Resources>-->
 
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Encabezado -->
             <RowDefinition Height="*"/>
+            <!-- Inspector -->
             <RowDefinition Height="Auto"/>
+            <!-- Botón -->
+            <RowDefinition Height="Auto"/>
+            <!-- Mensaje UX -->
         </Grid.RowDefinitions>
 
         <!-- Encabezado -->
@@ -32,17 +37,28 @@
                         <TextBlock Text="{Binding Heading}" TextWrapping="Wrap"/>
                     </WrapPanel>
                 </TextBlock.ToolTip>
-      </TextBlock>
+            </TextBlock>
         </DockPanel>
 
         <!-- Contenido: Attribute Inspector -->
-        <ContentPresenter Grid.Row="1" Content="{Binding InspectorView}"/>
+        <ContentPresenter Grid.Row="1" Content="{Binding InspectorView}" Margin="10"/>
 
         <!-- Botón para guardar cambios -->
-        <Button Grid.Row="2" Content="Guardar Cambios"
-            Command="{Binding SaveCommand}"
-            Margin="10"
-            HorizontalAlignment="Center"
-            Width="150"/>
+        <Button Grid.Row="2"
+                Content="Guardar Cambios"
+                Command="{Binding SaveCommand}"
+                Margin="10"
+                HorizontalAlignment="Center"
+                Width="150"/>
+
+        <!-- Mensaje UX: Atajo de teclado -->
+        <TextBlock Grid.Row="3"
+                   Text="💾 Presione Ctrl + Enter para guardar los cambios rápidamente."
+                   TextWrapping="Wrap"
+                   Margin="20,5,20,10"
+                   Foreground="Gray"
+                   FontStyle="Italic"
+                   FontSize="12"
+                   HorizontalAlignment="Center"/>
     </Grid>
 </UserControl>

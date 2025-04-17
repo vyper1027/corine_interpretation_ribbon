@@ -85,4 +85,63 @@ public static class LayerValidationService
             Utils.SendMessageToDockPane("✅ Validación de conformidad del archivo completada.", true);
         });
     }
+
+    public static async Task ValidateNullFields()
+    {
+        await QueuedTask.Run(async () =>
+        {
+            // Obtener la capa 'capaCorine'
+            var featureLayer = await Utils.GetDynamicLayer("capaCorine") as FeatureLayer;
+            if (featureLayer == null)
+            {
+                Utils.SendMessageToDockPane("❌ No se encontró la capa Corine.", true);
+                return;
+            }
+
+            using (Table table = featureLayer.GetTable())
+            {
+                using (FeatureClassDefinition definition = (FeatureClassDefinition)table.GetDefinition())
+                {
+                    // Campos requeridos para verificar si hay valores nulos
+                    string[] requiredFields = { "codigo", "insumo", "apoyo", "confiabili" };
+
+                    // Crear un filtro de consulta para buscar valores nulos en cualquiera de los campos requeridos
+                    QueryFilter queryFilter = new QueryFilter
+                    {
+                        WhereClause = string.Join(" OR ", requiredFields.Select(f => $"{f} IS NULL"))
+                    };
+
+                    List<long> nullFeatureIds = new();
+
+                    // Ejecutar la búsqueda de filas con el filtro
+                    using (RowCursor cursor = table.Search(queryFilter, false))
+                    {
+                        int oidIndex = definition.FindField(definition.GetObjectIDField());
+                        while (cursor.MoveNext())
+                        {
+                            using (Row row = cursor.Current)
+                            {
+                                nullFeatureIds.Add(Convert.ToInt64(row[oidIndex]));
+                            }
+                        }
+                    }
+
+                    // Mostrar el resultado
+                    if (nullFeatureIds.Any())
+                    {
+                        string joined = string.Join(", ", nullFeatureIds.Take(50));
+                        string msg = $"❌ Hay {nullFeatureIds.Count} entidades con atributos nulos. Ej: {joined}";
+                        if (nullFeatureIds.Count > 50)
+                            msg += "...";
+                        Utils.SendMessageToDockPane(msg, true);
+                    }
+                    else
+                    {
+                        Utils.SendMessageToDockPane("✅ Todos los atributos requeridos están diligenciados.", true);
+                    }
+                }
+            }
+        });
+    }
+
 }
