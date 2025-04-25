@@ -19,6 +19,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GeoprocessingExecuteAsync;
 using ArcGIS.Core.Data.Exceptions;
+using ArcGIS.Core.Internal.Geometry;
 
 
 namespace ProAppModule2.UI.Buttons
@@ -133,6 +134,7 @@ namespace ProAppModule2.UI.Buttons
                     if (newFeatureOIDs.Count > 0)
                     {
                         await ClipInsertedFeatures(targetLayer, newFeatureOIDs);
+                        //await ExplodeMultipartFeatures(targetLayer, newFeatureOIDs);
                     }
                     else
                     {
@@ -357,5 +359,77 @@ namespace ProAppModule2.UI.Buttons
                 }
             });
         }
+
+        public async Task ExplodeMultipartFeatures(FeatureLayer targetLayer, IReadOnlyList<long> oids)
+        {
+            await QueuedTask.Run(() =>
+            {
+                try
+                {
+                    using (var table = targetLayer.GetTable())
+                    {
+                        var editOp = new EditOperation { Name = "Explotar multipartes en capa Corine" };
+                        var nuevosOIDs = new List<long>();
+                        var tableDef = table.GetDefinition();
+
+                        foreach (long oid in oids)
+                        {
+                            using (var rowCursor = table.Search(new QueryFilter { ObjectIDs = new List<long> { oid } }, false))
+                            {
+                                if (!rowCursor.MoveNext())
+                                    continue;
+
+                                using (var row = rowCursor.Current as Feature)
+                                {
+                                    var shape = row.GetShape();
+                                    if (shape is not Polygon polygon || polygon.PartCount <= 1)
+                                        continue;
+
+                                    foreach (var part in polygon.Parts)
+                                    {
+                                        var newPolygon = PolygonBuilder.CreatePolygon(part, polygon.SpatialReference);
+                                        var buffer = table.CreateRowBuffer();
+
+                                        foreach (var field in tableDef.GetFields())
+                                        {
+                                            if (!field.IsEditable || field.Name.Equals("OBJECTID", StringComparison.OrdinalIgnoreCase))
+                                                continue;
+
+                                            buffer[field.Name] = row[field.Name];
+                                        }
+
+                                        buffer["SHAPE"] = newPolygon;
+
+                                        var newFeature = table.CreateRow(buffer) as Feature;
+                                        editOp.Callback(ctx => ctx.Invalidate(newFeature), table);
+                                        nuevosOIDs.Add(newFeature.GetObjectID());
+                                    }
+
+                                    // Eliminar la geometría original
+                                    editOp.Delete(table, oid);
+                                }
+                            }
+                        }
+
+                        if (!editOp.IsEmpty)
+                        {
+                            if (editOp.Execute())
+                                Utils.SendMessageToDockPane($"✅ Multipartes explotadas correctamente. Nuevos IDs: {string.Join(", ", nuevosOIDs)}", true);
+                            else
+                                Utils.SendMessageToDockPane("❌ No se pudo ejecutar la operación de explosión de multipartes.", true);
+                        }
+                        else
+                        {
+                            Utils.SendMessageToDockPane("ℹ No se encontraron multipartes para explotar.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Utils.SendMessageToDockPane($"❌ Error al explotar multipartes: {ex.Message}", true);
+                }
+            });
+        }
+
     }
 }

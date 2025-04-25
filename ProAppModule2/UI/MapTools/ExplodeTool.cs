@@ -16,23 +16,21 @@ namespace ProAppModule2.UI.MapTools
     {
         public ExplodeTool() : base()
         {
-            // Ejecutar la operación de limpieza de selección en el hilo adecuado.
             QueuedTask.Run(() =>
             {
                 MapView mapView = MapView.Active;
                 if (mapView != null)
                 {
-                    mapView.Map?.SetSelection(null); // Limpiar cualquier selección activa
+                    mapView.Map?.SetSelection(null);
                 }
             });
 
-            SketchType = SketchGeometryType.Rectangle;
+            SketchType = SketchGeometryType.Point | SketchGeometryType.Rectangle;
             IsSketchTool = true;
             SketchOutputMode = SketchOutputMode.Map;
 
-            Utils.SendMessageToDockPane("Herramienta de explosión activada. Dibuje una línea para seleccionar polígonos.");
+            Utils.SendMessageToDockPane("Herramienta de explosión activada. Haga clic o dibuje un rectángulo para seleccionar polígonos.");
         }
-
 
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
@@ -66,10 +64,13 @@ namespace ProAppModule2.UI.MapTools
                     Table featureClass = editableLayer.GetTable();
                     var selectedOIDs = new List<long>();
 
+                    // Ajuste dinámico según el tipo de geometría
                     var spatialQueryFilter = new SpatialQueryFilter
                     {
                         FilterGeometry = geometry,
-                        SpatialRelationship = SpatialRelationship.Intersects
+                        SpatialRelationship = geometry.GeometryType == GeometryType.Point
+                            ? SpatialRelationship.Contains
+                            : SpatialRelationship.Intersects
                     };
 
                     using (var rowCursor = featureClass.Search(spatialQueryFilter, false))
@@ -79,7 +80,7 @@ namespace ProAppModule2.UI.MapTools
                             using (var feature = rowCursor.Current as Feature)
                             {
                                 var polyGeometry = feature.GetShape() as Polygon;
-                                if (polyGeometry != null && polyGeometry.Parts.Count > 1) // Solo procesar si es multipart
+                                if (polyGeometry != null && polyGeometry.Parts.Count > 1)
                                 {
                                     selectedOIDs.Add(feature.GetObjectID());
                                 }
@@ -102,7 +103,6 @@ namespace ProAppModule2.UI.MapTools
                         SelectModifiedFeatures = true
                     };
 
-                    // Filtrar solo las filas con los OID seleccionados
                     var queryFilter = new QueryFilter
                     {
                         WhereClause = $"OBJECTID IN ({string.Join(",", selectedOIDs)})"
@@ -119,16 +119,53 @@ namespace ProAppModule2.UI.MapTools
 
                                 var systemFields = new HashSet<string> { "OBJECTID", "Shape_Length", "Shape_Area", "Shape" };
                                 var originalAttributes = feature.GetFields()
-                                    .Where(f => !systemFields.Contains(f.Name))  // Excluir los campos del sistema
+                                    .Where(f => !systemFields.Contains(f.Name))
                                     .ToDictionary(f => f.Name, f => feature[f.Name]);
 
                                 foreach (var part in polyGeometry.Parts)
                                 {
                                     var newPolygon = PolygonBuilder.CreatePolygon(part);
-                                    splitOperation.Create(editableLayer, newPolygon, originalAttributes);                                    
+
+                                    // Verificar si se superpone con otras entidades
+                                    var overlapFilter = new SpatialQueryFilter
+                                    {
+                                        FilterGeometry = newPolygon,
+                                        SpatialRelationship = SpatialRelationship.Intersects,
+                                        WhereClause = $"OBJECTID <> {feature.GetObjectID()}"
+                                    };
+
+                                    var overlappingGeometries = new List<Polygon>();
+                                    using (var overlapCursor = featureClass.Search(overlapFilter, false))
+                                    {
+                                        while (overlapCursor.MoveNext())
+                                        {
+                                            using (var otherFeature = overlapCursor.Current as Feature)
+                                            {
+                                                var otherGeom = otherFeature.GetShape() as Polygon;
+                                                if (GeometryEngine.Instance.Intersects(newPolygon, otherGeom))
+                                                {
+                                                    overlappingGeometries.Add(otherGeom);
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (overlappingGeometries.Any())
+                                    {
+                                        var unionOverlap = GeometryEngine.Instance.Union(overlappingGeometries) as Polygon;
+                                        var clippedPolygon = GeometryEngine.Instance.Difference(newPolygon, unionOverlap) as Polygon;
+
+                                        if (clippedPolygon != null && !clippedPolygon.IsEmpty)
+                                            splitOperation.Create(editableLayer, clippedPolygon, originalAttributes);
+                                        else
+                                            Utils.SendMessageToDockPane("Parte omitida por solapamiento completo.");
+                                    }
+                                    else
+                                    {
+                                        splitOperation.Create(editableLayer, newPolygon, originalAttributes);
+                                    }
                                 }
 
-                                // Eliminar el polígono original después de crear los nuevos
                                 splitOperation.Delete(editableLayer, feature.GetObjectID());
                             }
                         }

@@ -69,12 +69,12 @@ namespace ProAppModule2.UI.MapTools
 
             return caption switch
             {
-                "Abrir en Google" => $"https://www.google.com/maps/@{y},{x},15z",
-                "Abrir en Bing" => $"https://www.bing.com/maps?lvl=15&style=h&cp={y}~{x}",
+                "Abrir en Google" => $"https://www.google.com/maps/@{y},{x},16z",
+                "Abrir en Bing" => $"https://www.bing.com/maps?lvl=16&style=h&cp={y}~{x}",
                 "Abrir en Esri" => $"https://www.arcgis.com/apps/mapviewer/index.html?" +
                                   "basemapUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FWorld_Imagery%2FMapServer" +
                                   "&basemapReferenceUrl=http%3A%2F%2Fservices.arcgisonline.com%2FArcGIS%2Frest%2Fservices%2FReference%2FWorld_Boundaries_and_Places%2FMapServer" +
-                                  $"&center={x}%2C{y}&level=15",
+                                  $"&center={x}%2C{y}&level=16",
                 _ => null
             };
         }

@@ -209,7 +209,7 @@
 		</button>
 		  
 		 <button id="ProAppModule2_Explode_Feature_Button" caption="Explotar Poligono" className="UI.MapTools.ExplodeTool" loadOnClick="true" keytip="z2" smallImage="EditingExplode16" largeImage="EditingExplode32">
-			<tooltip heading="Unir poligono">Unir poligono<disabledText /></tooltip>
+			<tooltip heading="Explotar poligono">Explotar poligono<disabledText /></tooltip>
 		</button>
 		  
 		<tool id="ProAppModule2_Open_Webmap_Bing_Button" caption="Abrir en Bing" className="UI.MapTools.OpenWebMapsTool" condition="esri_mapping_mapPane" keytip="z2" loadOnClick="true" smallImage="EvaluateFeatures16" largeImage="EvaluateFeatures32">

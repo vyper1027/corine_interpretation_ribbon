@@ -51,21 +51,16 @@ namespace ProAppModule2.UI.MapTools
                     return;
                 }
 
-                // Detectar si la tecla Shift está presionada
+                // Detectar si Shift está presionado y aplicar combinación
                 var combinationMethod = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift)
                     ? SelectionCombinationMethod.Add
                     : SelectionCombinationMethod.New;
 
-                // Aplicar selección con el método correspondiente
+                // Ejecutar selección
                 activeMapView.SelectFeatures(geometry, combinationMethod);
 
-                var results = activeMapView.GetFeatures(geometry);
-
-                if (results.Count == 0)
-                {
-                    Utils.SendMessageToDockPane("Seleccione uno o varios polígonos para comenzar...");
-                    return;
-                }
+                // Obtener selección completa después de aplicar combinación
+                var selection = activeMapView.Map.GetSelection();
 
                 var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio");
                 var layer2 = await Utils.GetDynamicLayer("capaCorine");
@@ -73,44 +68,35 @@ namespace ProAppModule2.UI.MapTools
                 var layerName1 = layer1?.Name ?? "No se encontró la capa 1";
                 var layerName2 = layer2?.Name ?? "No se encontró la capa 2";
 
-                foreach (var kvp in results.ToDictionary())
+                foreach (var kvp in selection.ToDictionary())
                 {
-                    var featLyr = kvp.Key as BasicFeatureLayer;
-                    if (featLyr == null) continue;
+                    var layer = kvp.Key;
+                    var oids = kvp.Value;
 
-                    if (featLyr.Name == layerName1 || featLyr.Name == layerName2)
+                    if (layer is BasicFeatureLayer featLyr &&
+                        (featLyr.Name == layerName1 || featLyr.Name == layerName2))
                     {
-                        var nc = kvp.Value.Count();
+                        int nc = oids.Count;
+
                         if (nc >= 1 && nc <= 90)
                         {
-                            var featureLayer = activeMap.GetLayersAsFlattenedList()
-                                                       .OfType<FeatureLayer>()
-                                                       .FirstOrDefault(fl => fl.Name.Equals(featLyr.Name));
+                            Utils.SendMessageToDockPane($"Ha seleccionado {nc} polígonos, continúe con el proceso...");
 
-                            if (featureLayer == null)
+                            var inspector = Module1.AttributeInspector;
+                            inspector.Load(featLyr, oids);
+                            Module1.AttributeViewModel.Heading = $"{featLyr.Name} - {oids.First()}";
+
+                            using (var cursor = featLyr.Search(new QueryFilter { ObjectIDs = oids }))
                             {
-                                Utils.SendMessageToDockPane($"No se encontró la capa {featLyr.Name} en el mapa activo.");
-                                continue;
-                            }
-
-                            var qf = new QueryFilter() { ObjectIDs = kvp.Value };
-                            var rowCursor = featLyr.Search(qf);
-
-                            while (rowCursor.MoveNext())
-                            {
-                                using (var feat = rowCursor.Current as Feature)
+                                while (cursor.MoveNext())
                                 {
-                                    var oids = kvp.Value.ToList();
-                                    Utils.SendMessageToDockPane($"Ha seleccionado {nc} polígonos, continúe con el proceso...");
-
-                                    var inspector = Module1.AttributeInspector;
-                                    inspector.Load(featLyr, kvp.Value);
-                                    Module1.AttributeViewModel.Heading = $"{featLyr.Name} - {oids[0]}";
-
-                                    foreach (var attrib in inspector)
+                                    using (var feat = cursor.Current as Feature)
                                     {
-                                        var value = attrib.CurrentValue.ToString();
-                                        Debug.WriteLine(value);
+                                        foreach (var attrib in inspector)
+                                        {
+                                            var value = attrib.CurrentValue?.ToString();
+                                            Debug.WriteLine(value);
+                                        }
                                     }
                                 }
                             }
@@ -122,6 +108,7 @@ namespace ProAppModule2.UI.MapTools
                     }
                 }
             });
+
             return Task.FromResult(true);
         }
     }
