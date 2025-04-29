@@ -1,12 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Mapping;
 using ArcGIS.Core.Data;
 using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Core.CIM;
+using System.Windows; // Para Application
 
 namespace ProAppModule2.UI.MapTools
 {
@@ -16,7 +18,38 @@ namespace ProAppModule2.UI.MapTools
         {
             SketchType = SketchGeometryType.Line;
             IsSketchTool = true;
+            UseSnapping = true;
             SketchOutputMode = SketchOutputMode.Map;
+        }
+
+        protected override Task OnToolActivateAsync(bool hasMapViewChanged)
+        {
+            Utils.SendMessageToDockPane("Dibuje la sección de corte...");
+
+            // Suscribir evento de teclado para detectar F6
+            Application.Current.MainWindow.PreviewKeyDown += OnKeyDown;
+
+            return base.OnToolActivateAsync(hasMapViewChanged);
+        }
+
+        protected override Task OnToolDeactivateAsync(bool hasMapViewChanged)
+        {
+            Utils.SendMessageToDockPane("Seleccione una herramienta para comenzar...");
+
+            // Desuscribir evento de teclado
+            Application.Current.MainWindow.PreviewKeyDown -= OnKeyDown;
+
+            return base.OnToolDeactivateAsync(hasMapViewChanged);
+        }
+
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.D6)
+            {
+                Utils.SendMessageToDockPane("F6 detectado: Realizando Snap to Vertex...");
+                SnapToVertex(); // Lógica de Snap que debes implementar
+                e.Handled = true;
+            }
         }
 
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
@@ -24,7 +57,7 @@ namespace ProAppModule2.UI.MapTools
             return QueuedTask.Run(() => ExecuteCut(geometry));
         }
 
-        protected Task<bool> ExecuteCut(Geometry geometry)
+        private Task<bool> ExecuteCut(Geometry geometry)
         {
             if (geometry == null)
                 return Task.FromResult(false);
@@ -41,7 +74,7 @@ namespace ProAppModule2.UI.MapTools
 
             Utils.SendMessageToDockPane("Capas editables identificadas, comenzando el procesamiento...");
 
-            EditOperation cutOperation = new EditOperation
+            var cutOperation = new EditOperation
             {
                 Name = "Cut Elements",
                 ProgressMessage = "Trabajando...",
@@ -51,13 +84,12 @@ namespace ProAppModule2.UI.MapTools
                 SelectNewFeatures = false
             };
 
-            foreach (FeatureLayer editableFeatureLayer in editableLayers)
+            foreach (var layer in editableLayers)
             {
-                Utils.SendMessageToDockPane($"Procesando capa: {editableFeatureLayer.Name}");
-                Table fc = editableFeatureLayer.GetTable();
+                Utils.SendMessageToDockPane($"Procesando capa: {layer.Name}");
+                Table table = layer.GetTable();
 
                 var cutOIDs = new List<long>();
-
                 var spatialFilter = new SpatialQueryFilter
                 {
                     FilterGeometry = geometry,
@@ -65,17 +97,17 @@ namespace ProAppModule2.UI.MapTools
                     SubFields = "*"
                 };
 
-                using (var rowCursor = fc.Search(spatialFilter, false))
+                using (var cursor = table.Search(spatialFilter, false))
                 {
-                    while (rowCursor.MoveNext())
+                    while (cursor.MoveNext())
                     {
-                        using (var feature = rowCursor.Current as Feature)
+                        using (var feature = cursor.Current as Feature)
                         {
-                            var geomTest = feature.GetShape();
-                            if (geomTest != null)
+                            var featureGeometry = feature?.GetShape();
+                            if (featureGeometry != null)
                             {
-                                var geomProjected = GeometryEngine.Instance.Project(geometry, geomTest.SpatialReference);
-                                if (GeometryEngine.Instance.Relate(geomProjected, geomTest, "TT*F*****"))
+                                var projectedGeometry = GeometryEngine.Instance.Project(geometry, featureGeometry.SpatialReference);
+                                if (GeometryEngine.Instance.Relate(projectedGeometry, featureGeometry, "TT*F*****"))
                                 {
                                     cutOIDs.Add(feature.GetObjectID());
                                 }
@@ -86,20 +118,16 @@ namespace ProAppModule2.UI.MapTools
 
                 if (cutOIDs.Count > 0)
                 {
-                    var atts = new Dictionary<string, object>
-                    {
-                        { "cambio", 2 }
-                    };
-
+                    var attributes = new Dictionary<string, object> { { "cambio", 2 } };
                     foreach (var oid in cutOIDs)
-                        cutOperation.Modify(editableFeatureLayer, oid, atts);
+                        cutOperation.Modify(layer, oid, attributes);
 
-                    cutOperation.Split(editableFeatureLayer, cutOIDs, geometry);
-                    Utils.SendMessageToDockPane($"Corte realizado en la capa: {editableFeatureLayer.Name}");
+                    cutOperation.Split(layer, cutOIDs, geometry);
+                    Utils.SendMessageToDockPane($"Corte realizado en la capa: {layer.Name}");
                 }
                 else
                 {
-                    Utils.SendMessageToDockPane($"No se encontraron elementos para cortar en la capa: {editableFeatureLayer.Name}");
+                    Utils.SendMessageToDockPane($"No se encontraron elementos para cortar en la capa: {layer.Name}");
                 }
             }
 
@@ -115,23 +143,23 @@ namespace ProAppModule2.UI.MapTools
 
         protected override async Task<bool> OnSketchModifiedAsync()
         {
-            Polyline cutGeometry = await base.GetCurrentSketchAsync() as Polyline;
+            var cutGeometry = await base.GetCurrentSketchAsync() as Polyline;
 
             await QueuedTask.Run(() =>
             {
                 if (cutGeometry?.PointCount > 2)
                 {
-                    var symbolReference = base.SketchSymbol;
-                    if (symbolReference == null)
+                    var currentSymbol = base.SketchSymbol;
+                    if (currentSymbol == null)
                     {
-                        var cimLineSymbol = SymbolFactory.Instance.ConstructLineSymbol(
+                        var lineSymbol = SymbolFactory.Instance.ConstructLineSymbol(
                             ColorFactory.Instance.RedRGB, 3, SimpleLineStyle.DashDotDot);
-                        base.SketchSymbol = cimLineSymbol.MakeSymbolReference();
+                        base.SketchSymbol = lineSymbol.MakeSymbolReference();
                     }
                     else
                     {
-                        symbolReference.Symbol.SetColor(ColorFactory.Instance.RedRGB);
-                        base.SketchSymbol = symbolReference;
+                        currentSymbol.Symbol.SetColor(ColorFactory.Instance.RedRGB);
+                        base.SketchSymbol = currentSymbol;
                     }
                 }
             });
@@ -139,16 +167,48 @@ namespace ProAppModule2.UI.MapTools
             return true;
         }
 
-        protected override Task OnToolDeactivateAsync(bool hasMapViewChanged)
+        private void SnapToVertex()
         {
-            Utils.SendMessageToDockPane("Seleccione una herramienta para comenzar...");
-            return base.OnToolDeactivateAsync(hasMapViewChanged);
-        }
+            // Obtener el mapa actual
+            var map = MapView.Active.Map;
 
-        protected override Task OnToolActivateAsync(bool hasMapViewChanged)
-        {
-            Utils.SendMessageToDockPane("Dibuje la sección de corte...");
-            return base.OnToolDeactivateAsync(hasMapViewChanged);
+            // Obtener la configuración actual de snapping por capa
+            var layerSnapModes = Snapping.GetLayerSnapModes(map);
+
+            // Detectar si el snapping a vértices ya está activado en al menos una capa
+            bool vertexSnappingActive = layerSnapModes.Values.Any(modes => modes.Vertex);
+
+            if (vertexSnappingActive)
+            {
+                // Desactivar el snapping
+                Snapping.IsEnabled = false;
+                Snapping.SnapChipEnabled = false;
+
+                // Limpiar modos de snapping por capa
+                foreach (var kvp in layerSnapModes)
+                {
+                    kvp.Value.Vertex = false;
+                    kvp.Value.Point = false;
+                }
+
+                Snapping.SetLayerSnapModes(layerSnapModes, true);
+                Utils.SendMessageToDockPane("Snapping a vértices desactivado.");
+            }
+            else
+            {
+                // Activar el snapping
+                Snapping.IsEnabled = true;
+                Snapping.SnapChipEnabled = true;
+
+                foreach (var kvp in layerSnapModes)
+                {
+                    kvp.Value.Vertex = true;
+                    kvp.Value.Point = false;
+                }
+
+                Snapping.SetLayerSnapModes(layerSnapModes, true);
+                Utils.SendMessageToDockPane("Snapping a vértices activado.");
+            }
         }
     }
 }
