@@ -190,7 +190,7 @@ namespace ProAppModule2.UI.Buttons
                                     rowBuffer["codigo"] = row["codigo"];
                                     rowBuffer["confiabili"] = null;
                                     rowBuffer["apoyo"] = row["apoyo"];
-                                    rowBuffer["horaAprobacion"] = DateTime.Now;
+                                    //rowBuffer["horaAprobacion"] = DateTime.Now;
                                     rowBuffer["apoyo"] = null;
 
                                     using (Feature newFeature = (Feature)targetTable.CreateRow(rowBuffer))

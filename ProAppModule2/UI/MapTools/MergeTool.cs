@@ -107,11 +107,17 @@ namespace ProAppModule2.UI.MapTools
 
                     foreach (var kvp in firstPolygonAttributes)
                     {
-                        inspector[kvp.Key] = kvp.Value;
+                        if (!kvp.Key.Equals("cambio", StringComparison.OrdinalIgnoreCase))
+                        {
+                            inspector[kvp.Key] = kvp.Value;
+                        }
                     }
+                    // Establecer el atributo "cambio" en 2 explícitamente
+                    inspector["cambio"] = 2;
 
                     mergeOperation.Merge(editableLayer, selectedOIDs, inspector);
                 }
+
                 else
                 {
                     Utils.SendMessageToDockPane("No se encontraron suficientes polígonos para unir.");

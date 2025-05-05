@@ -103,7 +103,7 @@ public static class LayerValidationService
                 using (FeatureClassDefinition definition = (FeatureClassDefinition)table.GetDefinition())
                 {
                     // Campos requeridos para verificar si hay valores nulos
-                    string[] requiredFields = { "codigo", "insumo", "apoyo", "confiabili" };
+                    string[] requiredFields = { "codigo", "insumo", "confiabili", "cambio" };
 
                     // Crear un filtro de consulta para buscar valores nulos en cualquiera de los campos requeridos
                     QueryFilter queryFilter = new QueryFilter
@@ -130,6 +130,7 @@ public static class LayerValidationService
                     if (nullFeatureIds.Any())
                     {
                         string joined = string.Join(", ", nullFeatureIds.Take(50));
+                        //"codigo", "insumo", "confiabili", "cambio"
                         string msg = $"❌ Hay {nullFeatureIds.Count} entidades con atributos nulos. Ej: {joined}";
                         if (nullFeatureIds.Count > 50)
                             msg += "...";
