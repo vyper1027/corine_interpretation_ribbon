@@ -99,6 +99,7 @@
 		<group id="ProAppModule2_Group10" caption="Editar Capa" appearsOnAddInTab="true">
 			<!-- host controls within groups -->
 			<button refID="ProAppModule2_Split_Feature_Button" size="large" />
+			<button refID="esri_editing_SplitCommand" size="large" />
 			<button refID="ProAppModule2_Merge_Feature_Button" size="large" />
 			<button refID="ProAppModule2_Explode_Feature_Button" size="large" />			
 		</group>
@@ -109,13 +110,14 @@
 			<tool refID="ProAppModule2_Open_Webmap_Esri_Button" size="middle" />
 		</group>
 		  
-		<group id="ProAppModule2_Group12" caption="Conformidad del archivo" appearsOnAddInTab="true">			
-			<button refID="ProAppModule2_Validate_Corine_Layer" size="large"/>
+		<group id="ProAppModule2_Group12" caption="Validaciones" appearsOnAddInTab="true">			
+			<button refID="ProAppModule2_Validate_Corine_Layer" size="middle"/>
+			<button refID="ProAppModule2_Validate_Corine_Layer_Topology" size="middle"/>
 		</group>
 
-		<group id="ProAppModule2_Group13" caption="Validar topologia" appearsOnAddInTab="true">
-			 <button refID="ProAppModule2_Validate_Corine_Layer_Topology" size="large"/>
-		</group>
+		<!--<group id="ProAppModule2_Group13" caption="Validar topologia" appearsOnAddInTab="true">
+			 
+		</group>-->
 	  </groups>
 		
       <controls>

@@ -117,7 +117,7 @@ namespace ProAppModule2.UI.Buttons
                 double totalAreaHa = totalArea / 10000;
                 string message = $"Capa: {layerName}\n" +
                                  $"Área total seleccionada: {Math.Round(totalAreaHa, 3)} ha\n" +
-                                 $"{Math.Round(totalArea, 3)} m²";
+                                 $"{Math.Round(totalArea, 3)} m²" + "\nWKID 9377";
                 Utils.SendMessageToDockPane(message);
             }
             catch (Exception ex)

@@ -30,12 +30,12 @@ public static class LayerValidationService
                 using (FeatureClassDefinition definition = (FeatureClassDefinition)table.GetDefinition())
                 {
                     // ✅ 2. Validar conformidad de atributos (estructura de la capa)
-                    string[] requiredFields = { "codigo", "insumo", "apoyo", "confiabili" };
+                    string[] requiredFields = { "codigo", "insumo", "cambio", "confiabili" };
                     Dictionary<string, FieldType> expectedTypes = new Dictionary<string, FieldType>
                     {
                         { "codigo", FieldType.Integer },
                         { "insumo", FieldType.String },
-                        { "apoyo", FieldType.String },
+                        { "cambio", FieldType.Integer },
                         { "confiabili", FieldType.String }
                     };
 
@@ -131,7 +131,7 @@ public static class LayerValidationService
                     {
                         string joined = string.Join(", ", nullFeatureIds.Take(50));
                         //"codigo", "insumo", "confiabili", "cambio"
-                        string msg = $"❌ Hay {nullFeatureIds.Count} entidades con atributos nulos. Ej: {joined}";
+                        string msg = $"❌ Hay {nullFeatureIds.Count} entidades con atributos nulos.\ncambio, confiabili, codigo o insumo\nEj: {joined}";
                         if (nullFeatureIds.Count > 50)
                             msg += "...";
                         Utils.SendMessageToDockPane(msg, true);

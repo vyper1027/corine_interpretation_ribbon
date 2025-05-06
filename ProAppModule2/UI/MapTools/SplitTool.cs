@@ -2,18 +2,26 @@
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Mapping;
+using System.Windows;
 using ArcGIS.Core.Data;
+using ArcGIS.Core.Geometry;
+using ArcGIS.Core.CIM;
+using ArcGIS.Core.Events;
+using ArcGIS.Desktop.Mapping;
 using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
-using ArcGIS.Core.CIM;
-using System.Windows; // Para Application
+using ArcGIS.Desktop.Editing.Events;
 
 namespace ProAppModule2.UI.MapTools
 {
     class SplitTool : MapTool
     {
+        private SubscriptionToken _rowCreatedToken;
+        private Dictionary<long, long> _newOidToParentOid = new(); // Nuevo polígono => polígono original
+        private Dictionary<long, Dictionary<string, object>> _originalAttributes = new(); // oid original => atributos
+        private HashSet<long> _currentCutOids = new(); // OIDs que están siendo cortados
+        private Table _currentTable;
+
         public SplitTool()
         {
             SketchType = SketchGeometryType.Line;
@@ -25,19 +33,25 @@ namespace ProAppModule2.UI.MapTools
         protected override Task OnToolActivateAsync(bool hasMapViewChanged)
         {
             Utils.SendMessageToDockPane("Dibuje la sección de corte...");
-
-            // Suscribir evento de teclado para detectar F6
             Application.Current.MainWindow.PreviewKeyDown += OnKeyDown;
-
             return base.OnToolActivateAsync(hasMapViewChanged);
         }
 
         protected override Task OnToolDeactivateAsync(bool hasMapViewChanged)
         {
             Utils.SendMessageToDockPane("Seleccione una herramienta para comenzar...");
-
-            // Desuscribir evento de teclado
             Application.Current.MainWindow.PreviewKeyDown -= OnKeyDown;
+
+            if (_rowCreatedToken != null)
+            {
+                RowCreatedEvent.Unsubscribe(_rowCreatedToken);
+                _rowCreatedToken = null;
+            }
+
+            _newOidToParentOid.Clear();
+            _originalAttributes.Clear();
+            _currentCutOids.Clear();
+            _currentTable = null;
 
             return base.OnToolDeactivateAsync(hasMapViewChanged);
         }
@@ -47,7 +61,7 @@ namespace ProAppModule2.UI.MapTools
             if (e.Key == Key.D6)
             {
                 Utils.SendMessageToDockPane("F6 detectado: Realizando Snap to Vertex...");
-                SnapToVertex(); // Lógica de Snap que debes implementar
+                SnapToVertex();
                 e.Handled = true;
             }
         }
@@ -57,88 +71,169 @@ namespace ProAppModule2.UI.MapTools
             return QueuedTask.Run(() => ExecuteCut(geometry));
         }
 
-        private Task<bool> ExecuteCut(Geometry geometry)
+        private bool ExecuteCut(Geometry sketchGeometry)
         {
-            if (geometry == null)
-                return Task.FromResult(false);
+            if (sketchGeometry == null)
+                return false;
 
             var editableLayers = ActiveMapView.Map.GetLayersAsFlattenedList()
                 .OfType<FeatureLayer>()
-                .Where(lyr => lyr.CanEditData() && lyr.ShapeType == esriGeometryType.esriGeometryPolygon);
+                .Where(l => l.CanEditData() && l.ShapeType == esriGeometryType.esriGeometryPolygon);
 
             if (!editableLayers.Any())
             {
-                Utils.SendMessageToDockPane("No se encontraron capas editables para procesar.");
-                return Task.FromResult(false);
+                Utils.SendMessageToDockPane("No hay capas de polígonos editables.");
+                return false;
             }
-
-            Utils.SendMessageToDockPane("Capas editables identificadas, comenzando el procesamiento...");
-
-            var cutOperation = new EditOperation
-            {
-                Name = "Cut Elements",
-                ProgressMessage = "Trabajando...",
-                CancelMessage = "Operación cancelada.",
-                ErrorMessage = "Error al cortar polígonos",
-                SelectModifiedFeatures = false,
-                SelectNewFeatures = false
-            };
 
             foreach (var layer in editableLayers)
             {
-                Utils.SendMessageToDockPane($"Procesando capa: {layer.Name}");
-                Table table = layer.GetTable();
+                _currentTable = layer.GetTable();
+                _newOidToParentOid.Clear();
+                _originalAttributes.Clear();
+                _currentCutOids.Clear();
 
-                var cutOIDs = new List<long>();
                 var spatialFilter = new SpatialQueryFilter
                 {
-                    FilterGeometry = geometry,
-                    SpatialRelationship = SpatialRelationship.Crosses,
+                    FilterGeometry = sketchGeometry,
+                    SpatialRelationship = SpatialRelationship.Intersects,
                     SubFields = "*"
                 };
 
-                using (var cursor = table.Search(spatialFilter, false))
+                using (var cursor = _currentTable.Search(spatialFilter, false))
                 {
                     while (cursor.MoveNext())
                     {
-                        using (var feature = cursor.Current as Feature)
+                        var feature = cursor.Current as Feature;
+                        if (feature == null) continue;
+
+                        var originalGeometry = feature.GetShape();
+                        var projectedSketch = GeometryEngine.Instance.Project(sketchGeometry, originalGeometry.SpatialReference);
+                        if (GeometryEngine.Instance.Intersects(projectedSketch, originalGeometry))
                         {
-                            var featureGeometry = feature?.GetShape();
-                            if (featureGeometry != null)
+                            long oid = feature.GetObjectID();
+                            _currentCutOids.Add(oid);
+
+                            var attributes = new Dictionary<string, object>();
+                            var fields = feature.GetTable().GetDefinition().GetFields();
+                            foreach (var field in fields)
                             {
-                                var projectedGeometry = GeometryEngine.Instance.Project(geometry, featureGeometry.SpatialReference);
-                                if (GeometryEngine.Instance.Relate(projectedGeometry, featureGeometry, "TT*F*****"))
-                                {
-                                    cutOIDs.Add(feature.GetObjectID());
-                                }
+                                if (!field.IsEditable || field.FieldType == FieldType.OID || field.FieldType == FieldType.Geometry)
+                                    continue;
+
+                                attributes[field.Name] = feature[field.Name];
                             }
+
+                            _originalAttributes[oid] = attributes;
                         }
                     }
                 }
 
-                if (cutOIDs.Count > 0)
+                if (_currentCutOids.Count == 0)
                 {
-                    var attributes = new Dictionary<string, object> { { "cambio", 2 } };
-                    foreach (var oid in cutOIDs)
-                        cutOperation.Modify(layer, oid, attributes);
+                    Utils.SendMessageToDockPane($"No se encontraron polígonos para cortar en: {layer.Name}");
+                    continue;
+                }
 
-                    cutOperation.Split(layer, cutOIDs, geometry);
-                    Utils.SendMessageToDockPane($"Corte realizado en la capa: {layer.Name}");
-                }
-                else
+                // Evento para registrar los nuevos hijos con su padre correspondiente
+                _rowCreatedToken = RowCreatedEvent.Subscribe((args) =>
                 {
-                    Utils.SendMessageToDockPane($"No se encontraron elementos para cortar en la capa: {layer.Name}");
+                    if (args.Row is Feature newFeature && newFeature.GetTable().GetName() == _currentTable.GetName())
+                    {
+                        var shape = newFeature.GetShape();
+                        foreach (var parentOid in _currentCutOids)
+                        {
+                            var queryFilter = new QueryFilter
+                            {
+                                WhereClause = $"OBJECTID = {parentOid}"
+                            };
+
+                            using (var cursor = _currentTable.Search(queryFilter, false))
+                            {
+                                if (cursor.MoveNext())
+                                {
+                                    var row = cursor.Current as Feature;
+                                    if (row != null && GeometryEngine.Instance.Contains(row.GetShape(), shape))
+                                    {
+                                        _newOidToParentOid[newFeature.GetObjectID()] = parentOid;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }, _currentTable);
+
+
+                var op = new EditOperation
+                {
+                    Name = "Corte de polígonos",
+                    SelectModifiedFeatures = false,
+                    SelectNewFeatures = false
+                };
+
+                op.Split(layer, _currentCutOids.ToList(), sketchGeometry);
+
+                if (!op.Execute())
+                {
+                    Utils.SendMessageToDockPane($"Error al cortar en capa {layer.Name}: {op.ErrorMessage}");
+                    continue;
                 }
+
+                RowCreatedEvent.Unsubscribe(_rowCreatedToken);
+                _rowCreatedToken = null;
+
+                var updateOp = new EditOperation
+                {
+                    Name = "Actualizar atributos",
+                    SelectNewFeatures = true
+                };
+
+                foreach (var kvp in _newOidToParentOid)
+                {
+                    long newOid = kvp.Key;
+                    long parentOid = kvp.Value;
+
+                    if (_originalAttributes.TryGetValue(parentOid, out var attrs))
+                    {
+                        var copyAttrs = new Dictionary<string, object>(attrs)
+                        {
+                            ["cambio"] = 2
+                        };
+
+                        updateOp.Modify(layer, newOid, copyAttrs);
+                    }
+                }
+
+                // Actualizar también los atributos del polígono padre
+                foreach (var parentOid in _currentCutOids)
+                {
+                    if (_originalAttributes.TryGetValue(parentOid, out var parentAttrs))
+                    {
+                        var updatedAttrs = new Dictionary<string, object>(parentAttrs)
+                        {
+                            ["cambio"] = 2
+                        };
+
+                        updateOp.Modify(layer, parentOid, updatedAttrs);
+                    }
+                }
+
+
+                if (!updateOp.IsEmpty)
+                {
+                    if (!updateOp.Execute())
+                        Utils.SendMessageToDockPane($"Error al actualizar atributos: {updateOp.ErrorMessage}");
+                }
+
+                _newOidToParentOid.Clear();
+                _originalAttributes.Clear();
+                _currentCutOids.Clear();
+                _currentTable = null;
             }
 
-            var result = cutOperation.Execute();
-
-            if (result)
-                Utils.SendMessageToDockPane("El proceso de corte se completó con éxito.\nPuede dibujar otra línea para realizar otro corte.");
-            else
-                Utils.SendMessageToDockPane("El proceso de corte falló. Verifique los datos y vuelva a intentarlo.");
-
-            return Task.FromResult(result);
+            Utils.SendMessageToDockPane("Corte completado.");
+            return true;
         }
 
         protected override async Task<bool> OnSketchModifiedAsync()
@@ -169,22 +264,15 @@ namespace ProAppModule2.UI.MapTools
 
         private void SnapToVertex()
         {
-            // Obtener el mapa actual
             var map = MapView.Active.Map;
-
-            // Obtener la configuración actual de snapping por capa
             var layerSnapModes = Snapping.GetLayerSnapModes(map);
-
-            // Detectar si el snapping a vértices ya está activado en al menos una capa
             bool vertexSnappingActive = layerSnapModes.Values.Any(modes => modes.Vertex);
 
             if (vertexSnappingActive)
             {
-                // Desactivar el snapping
                 Snapping.IsEnabled = false;
                 Snapping.SnapChipEnabled = false;
 
-                // Limpiar modos de snapping por capa
                 foreach (var kvp in layerSnapModes)
                 {
                     kvp.Value.Vertex = false;
@@ -196,7 +284,6 @@ namespace ProAppModule2.UI.MapTools
             }
             else
             {
-                // Activar el snapping
                 Snapping.IsEnabled = true;
                 Snapping.SnapChipEnabled = true;
 
