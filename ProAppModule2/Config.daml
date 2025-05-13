@@ -59,11 +59,12 @@
           <button refID="esri_mapping_exploreTool" size="large" />
         </group>
 		  
-        <group id="ComboBoxShowingLayers_Group1" caption="Seleccion" keytip="G0" appearsOnAddInTab="true">
+        <group id="ComboBoxShowingLayers_Group1" caption="Seleccion y Entregas" keytip="G0" appearsOnAddInTab="true">
           <!-- host controls within groups -->
 		  <comboBox refID="ComboBoxShowingLayers_SelectBloque" />
           <comboBox refID="ComboBoxShowingLayers_SelectMes" />		  
 		  <comboBox refID="ComboBoxShowingLayers_SelectPlancha" />
+		  <button refID="ProAppModule2_Generate_Partial_Delivery_Button" size="large" />
 
 		  <tool refID="ProAppModule2_MapTool1" size="large" />
 		  <button refID="ProAppModule2_Clear_Selection_Button" size="large" />			
@@ -144,7 +145,13 @@
 			 </tooltip>
 		</comboBox>
 		  
-        <tool id="ProAppModule2_MapTool1" caption="Seleccionar Poligonos" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
+		<button id="ProAppModule2_Generate_Partial_Delivery_Button" caption="Generar Entrega Parcial" className="UI.Buttons.GeneratePartialDelivery" loadOnClick="true" smallImage="Layer_LPK_File_Schema16" largeImage="Layer_LPK_File_Schema32">
+			<tooltip heading="Generar Entrega Parcial">
+				Generar Entrega Parcial<disabledText />
+			</tooltip>
+		</button>
+
+		  <tool id="ProAppModule2_MapTool1" caption="Seleccionar Poligonos" className="UI.MapTools.MapTool1" loadOnClick="true" smallImage="SelectionSelectTool16" largeImage="SelectionSelectTool32" condition="esri_mapping_mapPane">
           <tooltip heading="Tooltip Heading">Seleccionar Poligono<disabledText /></tooltip>
           <content guid="00c1fa9c-09cd-4620-88d1-620c2feb0935" />
         </tool>

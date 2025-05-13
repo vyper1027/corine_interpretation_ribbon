@@ -22,6 +22,8 @@ namespace ProAppModule2.UI.ComboBoxes
         public static SelectFeature ComboPlancha { get; private set; }
 
         private List<SelectFeature> _otherComboBoxes = new();
+        public string SelectedValue => SelectedItem is FeatureComboBoxItem item ? item.Text : null;
+
 
         protected override void OnUpdate()
         {
