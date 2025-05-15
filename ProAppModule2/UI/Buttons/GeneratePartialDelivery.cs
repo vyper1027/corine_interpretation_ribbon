@@ -30,7 +30,7 @@ namespace ProAppModule2.UI.Buttons
 
             if (string.IsNullOrEmpty(field) || string.IsNullOrEmpty(value))
             {
-                Utils.SendMessageToDockPane("⚠️ No hay valores seleccionados en los combos Bloque, Mes o Plancha.");
+                Utils.SendMessageToDockPane("⚠️ No hay valores seleccionados en el combo mes de entrega");
                 return;
             }
 
@@ -174,14 +174,14 @@ namespace ProAppModule2.UI.Buttons
             if (!string.IsNullOrWhiteSpace(mes))
                 return ("Mes_Interpretacion", mes, $"   🗓️ Mes: {mes}\n");
 
-            if (!string.IsNullOrWhiteSpace(bloque))
-                return ("Bloque", bloque, $"   🧱 Bloque: {bloque}\n");
-
-            if (!string.IsNullOrWhiteSpace(plancha))
-                return ("Plancha", plancha, $"   📄 Plancha: {plancha}\n");
+            if (!string.IsNullOrWhiteSpace(bloque) || !string.IsNullOrWhiteSpace(plancha))
+            {
+                Utils.SendMessageToDockPane("⚠️ La entrega solo está permitida por *Mes de entrega*. Selecciona un mes válido.");
+            }
 
             return (null, null, null);
         }
+
 
         private async Task<string> GenerateVersionedOutputNameAsync(string fieldName, string value)
         {
@@ -382,8 +382,8 @@ namespace ProAppModule2.UI.Buttons
                                 if (dominios.TryGetValue(domainName, out var existingDomain))
                                 {
                                     var domainDesc = new CodedValueDomainDescription(existingDomain);
-                                    newField.SetDomainDescription(domainDesc); // ✅ uso recomendado en SDK 3.1+
-                                    Utils.SendMessageToDockPane($"🔗 Asignado dominio '{domainName}' al campo '{field.Name}'");
+                                    newField.SetDomainDescription(domainDesc);
+                                    Utils.SendMessageToDockPane($"🔗 Asignado dominio '{domainName}' al campo '{field.Name}'", true);
                                 }
                                 else
                                 {
@@ -396,7 +396,7 @@ namespace ProAppModule2.UI.Buttons
 
                         var shapeDesc = new ShapeDescription(def);
                         var fcDescription = new FeatureClassDescription(featureClassName, fieldDescriptions, shapeDesc);
-
+                        Utils.SendMessageToDockPane("Generando capa de entrega...", true);
                         schemaBuilder.Create(datasetDesc, fcDescription);
 
                         if (!schemaBuilder.Build())
