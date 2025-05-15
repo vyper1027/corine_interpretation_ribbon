@@ -355,29 +355,48 @@ namespace ProAppModule2.UI.Buttons
                         var spatialRef = def.GetSpatialReference();
 
                         var datasetDesc = new FeatureDatasetDescription(datasetName, spatialRef);
+                        var schemaBuilder = new SchemaBuilder(geodatabase);
 
-                        var fieldDescriptions = def.GetFields()
-                            .Where(f => f.FieldType != FieldType.OID &&
-                                        f.FieldType != FieldType.GlobalID &&
-                                        f.FieldType != FieldType.Geometry)
-                            .Select(f =>
+                        // Obtener todos los dominios disponibles en la GDB
+                        var dominios = geodatabase.GetDomains()
+                            .OfType<CodedValueDomain>()
+                            .ToDictionary(d => d.GetName(), d => d);
+
+                        var fieldDescriptions = new List<FieldDescription>();
+
+                        foreach (var field in def.GetFields())
+                        {
+                            if (field.FieldType is FieldType.OID or FieldType.GlobalID or FieldType.Geometry)
+                                continue;
+
+                            var newField = new FieldDescription(field.Name, field.FieldType)
                             {
-                                return f.FieldType switch
+                                Length = field.Length
+                            };
+
+                            // Verificar si el campo tiene dominio asignado y si está presente en la GDB
+                            var domain = field.GetDomain() as CodedValueDomain;
+                            if (domain != null)
+                            {
+                                string domainName = domain.GetName();
+                                if (dominios.TryGetValue(domainName, out var existingDomain))
                                 {
-                                    FieldType.Integer => FieldDescription.CreateIntegerField(f.Name),
-                                    FieldType.String => FieldDescription.CreateStringField(f.Name, f.Length),
-                                    FieldType.Double => new FieldDescription(f.Name, FieldType.Double),
-                                    FieldType.Date => new FieldDescription(f.Name, FieldType.Date),
-                                    _ => null
-                                };
-                            })
-                            .Where(fd => fd != null)
-                            .ToList();
+                                    var domainDesc = new CodedValueDomainDescription(existingDomain);
+                                    newField.SetDomainDescription(domainDesc); // ✅ uso recomendado en SDK 3.1+
+                                    Utils.SendMessageToDockPane($"🔗 Asignado dominio '{domainName}' al campo '{field.Name}'");
+                                }
+                                else
+                                {
+                                    Utils.SendMessageToDockPane($"⚠️ Dominio '{domainName}' no encontrado para el campo '{field.Name}'");
+                                }
+                            }
+
+                            fieldDescriptions.Add(newField);
+                        }
 
                         var shapeDesc = new ShapeDescription(def);
                         var fcDescription = new FeatureClassDescription(featureClassName, fieldDescriptions, shapeDesc);
 
-                        var schemaBuilder = new SchemaBuilder(geodatabase);
                         schemaBuilder.Create(datasetDesc, fcDescription);
 
                         if (!schemaBuilder.Build())
@@ -386,7 +405,6 @@ namespace ProAppModule2.UI.Buttons
                             return false;
                         }
 
-                        //geodatabase.RefreshCatalog();
                         return true;
                     }
                 }
@@ -396,6 +414,7 @@ namespace ProAppModule2.UI.Buttons
                     return false;
                 }
             });
-        }        
+        }
+
     }
 }

@@ -11,6 +11,7 @@ using ArcGIS.Desktop.Mapping;
 using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Editing.Events;
+using System;
 
 namespace ProAppModule2.UI.MapTools
 {
@@ -74,7 +75,10 @@ namespace ProAppModule2.UI.MapTools
         private bool ExecuteCut(Geometry sketchGeometry)
         {
             if (sketchGeometry == null)
+            {
+                Utils.SendMessageToDockPane("❌ Geometría de corte no válida.");
                 return false;
+            }
 
             var editableLayers = ActiveMapView.Map.GetLayersAsFlattenedList()
                 .OfType<FeatureLayer>()
@@ -82,7 +86,7 @@ namespace ProAppModule2.UI.MapTools
 
             if (!editableLayers.Any())
             {
-                Utils.SendMessageToDockPane("No hay capas de polígonos editables.");
+                Utils.SendMessageToDockPane("❌ No hay capas de polígonos editables.");
                 return false;
             }
 
@@ -109,6 +113,7 @@ namespace ProAppModule2.UI.MapTools
 
                         var originalGeometry = feature.GetShape();
                         var projectedSketch = GeometryEngine.Instance.Project(sketchGeometry, originalGeometry.SpatialReference);
+
                         if (GeometryEngine.Instance.Intersects(projectedSketch, originalGeometry))
                         {
                             long oid = feature.GetObjectID();
@@ -131,11 +136,20 @@ namespace ProAppModule2.UI.MapTools
 
                 if (_currentCutOids.Count == 0)
                 {
-                    Utils.SendMessageToDockPane($"No se encontraron polígonos para cortar en: {layer.Name}");
+                    Utils.SendMessageToDockPane($"⚠️ No se encontraron polígonos para cortar en: {layer.Name}");
                     continue;
                 }
 
-                // Evento para registrar los nuevos hijos con su padre correspondiente
+                // Validar si la capa contiene el campo "cambio"
+                var layerFields = layer.GetFeatureClass().GetDefinition().GetFields()
+                    .Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                bool hasCambioField = layerFields.Contains("cambio");
+                if (!hasCambioField)
+                {
+                    Utils.SendMessageToDockPane($"⚠️ El campo 'cambio' no está presente en la capa {layer.Name}. No se actualizará.");
+                }
+
                 _rowCreatedToken = RowCreatedEvent.Subscribe((args) =>
                 {
                     if (args.Row is Feature newFeature && newFeature.GetTable().GetName() == _currentTable.GetName())
@@ -164,7 +178,6 @@ namespace ProAppModule2.UI.MapTools
                     }
                 }, _currentTable);
 
-
                 var op = new EditOperation
                 {
                     Name = "Corte de polígonos",
@@ -176,7 +189,7 @@ namespace ProAppModule2.UI.MapTools
 
                 if (!op.Execute())
                 {
-                    Utils.SendMessageToDockPane($"Error al cortar en capa {layer.Name}: {op.ErrorMessage}");
+                    Utils.SendMessageToDockPane($"❌ Error al cortar en capa {layer.Name}: {op.ErrorMessage}");
                     continue;
                 }
 
@@ -196,34 +209,38 @@ namespace ProAppModule2.UI.MapTools
 
                     if (_originalAttributes.TryGetValue(parentOid, out var attrs))
                     {
-                        var copyAttrs = new Dictionary<string, object>(attrs)
-                        {
-                            ["cambio"] = 2
-                        };
+                        var copyAttrs = new Dictionary<string, object>(attrs);
+                        if (hasCambioField)
+                            copyAttrs["cambio"] = 2;
 
                         updateOp.Modify(layer, newOid, copyAttrs);
                     }
+                    else
+                    {
+                        Utils.SendMessageToDockPane($"⚠️ No se encontraron atributos originales para OID {parentOid}");
+                    }
                 }
 
-                // Actualizar también los atributos del polígono padre
                 foreach (var parentOid in _currentCutOids)
                 {
                     if (_originalAttributes.TryGetValue(parentOid, out var parentAttrs))
                     {
-                        var updatedAttrs = new Dictionary<string, object>(parentAttrs)
-                        {
-                            ["cambio"] = 2
-                        };
+                        var updatedAttrs = new Dictionary<string, object>(parentAttrs);
+                        if (hasCambioField)
+                            updatedAttrs["cambio"] = 2;
 
                         updateOp.Modify(layer, parentOid, updatedAttrs);
                     }
+                    else
+                    {
+                        Utils.SendMessageToDockPane($"⚠️ No se encontraron atributos del polígono padre OID {parentOid}");
+                    }
                 }
-
 
                 if (!updateOp.IsEmpty)
                 {
                     if (!updateOp.Execute())
-                        Utils.SendMessageToDockPane($"Error al actualizar atributos: {updateOp.ErrorMessage}");
+                        Utils.SendMessageToDockPane($"❌ Error al actualizar atributos en capa {layer.Name}: {updateOp.ErrorMessage}");
                 }
 
                 _newOidToParentOid.Clear();
@@ -232,9 +249,10 @@ namespace ProAppModule2.UI.MapTools
                 _currentTable = null;
             }
 
-            Utils.SendMessageToDockPane("Corte completado.");
+            Utils.SendMessageToDockPane("✅ Corte completado.");
             return true;
         }
+
 
         protected override async Task<bool> OnSketchModifiedAsync()
         {

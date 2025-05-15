@@ -234,7 +234,6 @@ namespace ProAppModule2.UI.Buttons
             });
         }
 
-
         /// <summary>
         /// Recorta los polígonos insertados para evitar superposición (Overlap)
         /// </summary>

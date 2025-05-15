@@ -1,4 +1,5 @@
-﻿//Copyright 2015-2016 Esri
+﻿
+//Copyright 2015-2016 Esri
 
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -105,18 +106,41 @@ namespace ProAppModule2.UI.MapTools
                     var inspector = new Inspector();
                     inspector.Load(editableLayer, firstFeatureOID);
 
-                    foreach (var kvp in firstPolygonAttributes)
+                    // Obtener los nombres de campo desde el FeatureClass
+                    var layerDefinition = editableLayer.GetFeatureClass().GetDefinition();
+                    var fieldNames = layerDefinition.GetFields()
+                                                    .Select(f => f.Name)
+                                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                    // Validar que firstPolygonAttributes no sea null
+                    if (firstPolygonAttributes != null)
                     {
-                        if (!kvp.Key.Equals("cambio", StringComparison.OrdinalIgnoreCase))
+                        foreach (var kvp in firstPolygonAttributes)
                         {
-                            inspector[kvp.Key] = kvp.Value;
+                            if (!kvp.Key.Equals("cambio", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (fieldNames.Contains(kvp.Key))
+                                    inspector[kvp.Key] = kvp.Value;
+                            }
                         }
                     }
-                    // Establecer el atributo "cambio" en 2 explícitamente
-                    inspector["cambio"] = 2;
+                    else
+                    {
+                        Utils.SendMessageToDockPane("⚠️ Atributos del primer polígono no disponibles (firstPolygonAttributes es null).");
+                    }
+
+                    if (fieldNames.Contains("cambio"))
+                    {
+                        inspector["cambio"] = 2;
+                    }
+                    else
+                    {
+                        Utils.SendMessageToDockPane("⚠️ El campo 'cambio' no está presente en la capa.");
+                    }
 
                     mergeOperation.Merge(editableLayer, selectedOIDs, inspector);
                 }
+
 
                 else
                 {
