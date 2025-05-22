@@ -18,9 +18,9 @@ namespace ProAppModule2.UI.MapTools
     class SplitTool : MapTool
     {
         private SubscriptionToken _rowCreatedToken;
-        private Dictionary<long, long> _newOidToParentOid = new(); // Nuevo polígono => polígono original
-        private Dictionary<long, Dictionary<string, object>> _originalAttributes = new(); // oid original => atributos
-        private HashSet<long> _currentCutOids = new(); // OIDs que están siendo cortados
+        private Dictionary<long, long> _newOidToParentOid = new();
+        private Dictionary<long, Dictionary<string, object>> _originalAttributes = new();
+        private HashSet<long> _currentCutOids = new();
         private Table _currentTable;
 
         public SplitTool()
@@ -91,7 +91,10 @@ namespace ProAppModule2.UI.MapTools
             }
 
             foreach (var layer in editableLayers)
-            {
+            {                
+                if (!layer.Name.Contains("_asignacion"))
+                    continue;
+
                 _currentTable = layer.GetTable();
                 _newOidToParentOid.Clear();
                 _originalAttributes.Clear();
@@ -140,7 +143,6 @@ namespace ProAppModule2.UI.MapTools
                     continue;
                 }
 
-                // Validar si la capa contiene el campo "cambio"
                 var layerFields = layer.GetFeatureClass().GetDefinition().GetFields()
                     .Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -157,10 +159,7 @@ namespace ProAppModule2.UI.MapTools
                         var shape = newFeature.GetShape();
                         foreach (var parentOid in _currentCutOids)
                         {
-                            var queryFilter = new QueryFilter
-                            {
-                                WhereClause = $"OBJECTID = {parentOid}"
-                            };
+                            var queryFilter = new QueryFilter { WhereClause = $"OBJECTID = {parentOid}" };
 
                             using (var cursor = _currentTable.Search(queryFilter, false))
                             {
@@ -221,7 +220,10 @@ namespace ProAppModule2.UI.MapTools
                     }
                 }
 
-                foreach (var parentOid in _currentCutOids)
+                // Solo actualizar polígonos padres que realmente fueron cortados
+                var trulyCutParentOids = _newOidToParentOid.Values.Distinct();
+
+                foreach (var parentOid in trulyCutParentOids)
                 {
                     if (_originalAttributes.TryGetValue(parentOid, out var parentAttrs))
                     {
@@ -236,6 +238,7 @@ namespace ProAppModule2.UI.MapTools
                         Utils.SendMessageToDockPane($"⚠️ No se encontraron atributos del polígono padre OID {parentOid}");
                     }
                 }
+
 
                 if (!updateOp.IsEmpty)
                 {
@@ -252,7 +255,6 @@ namespace ProAppModule2.UI.MapTools
             Utils.SendMessageToDockPane("✅ Corte completado.");
             return true;
         }
-
 
         protected override async Task<bool> OnSketchModifiedAsync()
         {

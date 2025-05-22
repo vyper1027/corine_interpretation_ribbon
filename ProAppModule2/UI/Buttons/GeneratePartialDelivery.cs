@@ -9,9 +9,9 @@ using ArcGIS.Desktop.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ArcGIS.Desktop.Framework.Dialogs;
 using ArcGIS.Core.Data.DDL;
 using FieldDescription = ArcGIS.Core.Data.DDL.FieldDescription;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 
 namespace ProAppModule2.UI.Buttons
@@ -24,7 +24,7 @@ namespace ProAppModule2.UI.Buttons
             public Dictionary<string, object> Attributes { get; set; } = new();
         }
 
-        protected override void OnClick()
+        protected override async void OnClick()
         {
             var (field, value, mensaje) = GetSeleccionCombo();
 
@@ -35,6 +35,9 @@ namespace ProAppModule2.UI.Buttons
             }
 
             Utils.SendMessageToDockPane($"✅ Valor seleccionado:\n{mensaje}");
+
+            if (!await ConfirmarYGuardarEdicionesPendientesAsync())
+                return;
 
             _ = QueuedTask.Run(async () =>
             {
@@ -82,6 +85,37 @@ namespace ProAppModule2.UI.Buttons
                 else
                     Utils.SendMessageToDockPane("❌ Error al insertar los recortes en la geodatabase.", true);
             });
+        }
+
+        private async Task<bool> ConfirmarYGuardarEdicionesPendientesAsync()
+        {
+            if (Project.Current.HasEdits)
+            {
+                bool shouldSave = false;
+
+                // Mostrar cuadro de diálogo para confirmar guardado
+                await QueuedTask.Run(() =>
+                {
+                    var result = ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show(
+                        "Hay ediciones pendientes. ¿Deseas guardar los cambios y continuar?",
+                        "Guardar ediciones",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Warning);
+
+                    shouldSave = (result == System.Windows.MessageBoxResult.Yes);
+                });
+
+                if (!shouldSave)
+                {
+                    Utils.SendMessageToDockPane("❌ Operación cancelada por el usuario para evitar conflicto con ediciones activas.");
+                    return false;
+                }
+
+                Utils.SendMessageToDockPane("💾 Guardando cambios antes de continuar...");
+                await Project.Current.SaveEditsAsync();
+            }
+
+            return true;
         }
 
         private async Task<bool> InsertarGeometriasAsync(string featureClassName, List<ClippedFeature> features)
@@ -181,7 +215,6 @@ namespace ProAppModule2.UI.Buttons
 
             return (null, null, null);
         }
-
 
         private async Task<string> GenerateVersionedOutputNameAsync(string fieldName, string value)
         {

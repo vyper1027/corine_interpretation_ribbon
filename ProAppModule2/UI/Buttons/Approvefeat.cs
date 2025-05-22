@@ -43,10 +43,7 @@ namespace ProAppModule2.UI.Buttons
         }
 
         public void ApproveValues()
-        {
-
-            //  This sample is intended for use with a featureclass with a default text field named "Description".
-            //  You can replace "Description" with any field name that works for your dataset
+        {            
             if (MapView.Active == null)
             {
                 ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show("No MapView currently active. Exiting...", "Info");
@@ -307,7 +304,7 @@ namespace ProAppModule2.UI.Buttons
                                                     // Aplicar Difference acumulativamente
                                                     geometriesToModify[featureId] = GeometryEngine.Instance.Difference(
                                                         geometriesToModify[featureId], newGeometry);
-                                                }
+                                                }  
                                                 else
                                                 {
                                                     geometriesToModify[featureId] = GeometryEngine.Instance.Difference(
@@ -321,17 +318,33 @@ namespace ProAppModule2.UI.Buttons
                         }
 
                         // 📌 Aplicar todas las modificaciones acumuladas
+
+                        // 📌 Aplicar todas las modificaciones acumuladas
                         foreach (var entry in geometriesToModify)
                         {
-                            if (entry.Value != null && !entry.Value.IsEmpty)
+                            var cleanedGeometry = entry.Value;
+
+                            if (cleanedGeometry != null && !cleanedGeometry.IsEmpty)
                             {
-                                editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> { 
-                                    { "SHAPE", entry.Value    },
-                                    { "cambio", 2 }
-                                });
-                                affectedFeatureIds.Add(entry.Key);
+                                // Filtrar por área mínima de 5 ha (50,000 m²)
+                                double area = GeometryEngine.Instance.Area(cleanedGeometry);
+
+                                if (area >= 50000) // ✅ Mantener solo si es >= 5 hectáreas
+                                {
+                                    editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> {
+                                        { "SHAPE", cleanedGeometry },
+                                        { "cambio", 2 }
+                                    });
+
+                                    affectedFeatureIds.Add(entry.Key);
+                                }
+                                else
+                                {                                    
+                                    Utils.SendMessageToDockPane($"⚠ Polígono {entry.Key} omitido: área < 5 ha.", true);
+                                }
                             }
                         }
+
 
                         // 📌 Ejecutar la operación de edición si hay cambios
                         if (!editOp.IsEmpty)
