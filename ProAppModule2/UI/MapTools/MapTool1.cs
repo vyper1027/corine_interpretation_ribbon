@@ -1,13 +1,8 @@
-﻿using ArcGIS.Core.CIM;
-using ArcGIS.Core.Data;
+﻿using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
-using ArcGIS.Desktop.Core;
-using ArcGIS.Desktop.Editing;
-using ArcGIS.Desktop.Extensions;
-using ArcGIS.Desktop.Framework;
-using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
+using ArcGIS.Desktop.Framework.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -35,6 +30,7 @@ namespace ProAppModule2.UI.MapTools
         protected override Task<bool> OnSketchCompleteAsync(Geometry geometry)
         {
             CustomDockpaneViewModel.Show();
+
             QueuedTask.Run(async () =>
             {
                 var activeMapView = MapView.Active;
@@ -51,22 +47,23 @@ namespace ProAppModule2.UI.MapTools
                     return;
                 }
 
-                // Detectar si Shift está presionado y aplicar combinación
-                var combinationMethod = System.Windows.Input.Keyboard.Modifiers.HasFlag(System.Windows.Input.ModifierKeys.Shift)
-                    ? SelectionCombinationMethod.Add
-                    : SelectionCombinationMethod.New;
-
-                // Ejecutar selección
-                activeMapView.SelectFeatures(geometry, combinationMethod);
-
-                // Obtener selección completa después de aplicar combinación
-                var selection = activeMapView.Map.GetSelection();
-
-                var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio");
-                var layer2 = await Utils.GetDynamicLayer("capaCorine");
+                var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio") as BasicFeatureLayer;
+                var layer2 = await Utils.GetDynamicLayer("capaCorine") as BasicFeatureLayer;
 
                 var layerName1 = layer1?.Name ?? "No se encontró la capa 1";
                 var layerName2 = layer2?.Name ?? "No se encontró la capa 2";
+
+                var keyboard = System.Windows.Input.Keyboard.Modifiers;
+                var combinationMethod =
+                    keyboard.HasFlag(System.Windows.Input.ModifierKeys.Shift) ? SelectionCombinationMethod.Add :
+                    keyboard.HasFlag(System.Windows.Input.ModifierKeys.Control) ? SelectionCombinationMethod.Subtract :
+                    SelectionCombinationMethod.New;
+
+                // Seleccionar entidades en las capas visibles con el método combinado
+                activeMapView.SelectFeatures(geometry, combinationMethod);
+
+                // Procesar la selección
+                var selection = activeMap.GetSelection();
 
                 foreach (var kvp in selection.ToDictionary())
                 {

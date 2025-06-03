@@ -198,30 +198,29 @@ namespace ProAppModule2
                 {
                     "vectoresDeCambio" => @"^Cambios_\d{2}_\d{2}$",
                     "capaCorine" => @"^CLC\d{4}_[A-Z]\d+_asignacion$",
+                    "capaBase" => @"^CLC\d{4}_[A-Z]\d+$", // sin "_asignacion"
                     _ => null
                 };
 
                 if (pattern == null) return null;
 
-                // Determinar qué ventana de mapa debe usarse
-                IMapPane targetPane = null;
-
-                if (layerType == "vectoresDeCambio")
+                // Determinar en qué ventana buscar según el tipo de capa
+                IMapPane targetPane = layerType switch
                 {
-                    targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana1"));
-                }
-                else if (layerType == "capaCorine")
-                {
-                    targetPane = mapPanes.FirstOrDefault(pane => pane.Caption.Contains("Ventana2"));
-                }
+                    "vectoresDeCambio" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana1")),
+                    "capaBase" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana1")),
+                    "capaCorine" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana2")),
+                    _ => null
+                };
 
-                if (targetPane == null || targetPane.MapView == null) return null;
+                if (targetPane?.MapView == null) return null;
 
-                // Buscar la capa en la ventana seleccionada
+                // Buscar la capa que coincida con el patrón
                 var layers = targetPane.MapView.Map.GetLayersAsFlattenedList().OfType<FeatureLayer>();
                 return layers.FirstOrDefault(fl => Regex.IsMatch(fl.Name, pattern));
             });
         }
+
 
         /// <summary>
         /// Obtiene la capa de topología "Cobertura_Corine_Topologia" desde la Ventana 2 del mapa activo.

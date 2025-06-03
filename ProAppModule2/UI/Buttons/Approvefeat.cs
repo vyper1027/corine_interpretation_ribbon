@@ -138,12 +138,42 @@ namespace ProAppModule2.UI.Buttons
                         Utils.SendMessageToDockPane("⚠ No se encontraron nuevos IDs para recortar.");
                     }
 
-                    // 📌 Validar la topología solo si el checkbox está activado
                     if (isTopologyValidationEnabled)
                     {
-                        Utils.SendMessageToDockPane("🔍 Ejecutando validación de topología...");
-                        await CorineAnalysisService.ValidateCurrentExtentTopology();
+                        if (Project.Current.HasEdits)
+                        {
+                            // Mostrar advertencia al usuario
+                            var result = ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show(
+                                "⚠ Hay ediciones pendientes. Para validar la topología, es necesario guardar los cambios.\n\n" +
+                                "Una vez guardados, no podrá deshacer las ediciones.\n\n¿Desea guardar y continuar?",
+                                "Guardar ediciones antes de validar",
+                                System.Windows.MessageBoxButton.YesNo,
+                                System.Windows.MessageBoxImage.Warning);
+
+                            if (result == System.Windows.MessageBoxResult.Yes)
+                            {
+                                var saveResult = await Project.Current.SaveEditsAsync();
+                                if (!saveResult)
+                                {
+                                    Utils.SendMessageToDockPane("❌ Error al guardar ediciones. No se pudo validar la topología.", true);
+                                    return;
+                                }
+
+                                Utils.SendMessageToDockPane("🔍 Ejecutando validación de topología...");
+                                await CorineAnalysisService.ValidateCurrentExtentTopology();
+                            }
+                            else
+                            {
+                                Utils.SendMessageToDockPane("ℹ Validación de topología cancelada por el usuario.");
+                            }
+                        }
+                        else
+                        {
+                            Utils.SendMessageToDockPane("🔍 Ejecutando validación de topología...");
+                            await CorineAnalysisService.ValidateCurrentExtentTopology();
+                        }
                     }
+
                 }
                 catch (Exception exc)
                 {
@@ -317,7 +347,7 @@ namespace ProAppModule2.UI.Buttons
                             }
                         }
 
-                        // 📌 Aplicar todas las modificaciones acumuladas
+                        
 
                         // 📌 Aplicar todas las modificaciones acumuladas
                         foreach (var entry in geometriesToModify)
@@ -329,7 +359,7 @@ namespace ProAppModule2.UI.Buttons
                                 // Filtrar por área mínima de 5 ha (50,000 m²)
                                 double area = GeometryEngine.Instance.Area(cleanedGeometry);
 
-                                if (area >= 50000) // ✅ Mantener solo si es >= 5 hectáreas
+                                if (area >= 0)
                                 {
                                     editOp.Modify(targetTable, entry.Key, new Dictionary<string, object> {
                                         { "SHAPE", cleanedGeometry },

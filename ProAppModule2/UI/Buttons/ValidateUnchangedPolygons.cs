@@ -2,18 +2,16 @@
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using GeoprocessingExecuteAsync;
 using System;
-
-
 namespace ProAppModule2.UI.Buttons
 {
-    internal class ValidateTopologyButton : Button
+    internal class ValidateUnchangedPolygons : Button
     {
         private readonly CorineAnalysisService _analysisService;
 
         /// <summary>
         /// Constructor de la clase, inicializa el servicio de análisis
         /// </summary>
-        public ValidateTopologyButton()
+        public ValidateUnchangedPolygons()
         {
             _analysisService = new CorineAnalysisService();
         }
@@ -23,23 +21,22 @@ namespace ProAppModule2.UI.Buttons
             Validate();
         }
 
-        /// <summary>
-        /// Ejecuta la validación de topología de todas las capas usando el servicio
-        /// </summary>
+
         private void Validate()
         {
             QueuedTask.Run(async () =>
             {
                 try
                 {
-                    await CorineAnalysisService.ValidateAllLayerTopology();
-                    Utils.SendMessageToDockPane("✅ Validación de topología completada.");
+                    await LayerValidationService.ValidateChangedFeaturesByAttributeAsync();
+                    Utils.SendMessageToDockPane("✅ Validación de poligonos completada.", true);
                 }
                 catch (Exception ex)
                 {
-                    Utils.SendMessageToDockPane($"❌ Error al validar la topología: {ex.Message}", true);
+                    Utils.SendMessageToDockPane($"❌ Error poligonos sin cambio (cambio 0 a cambio 1): {ex.Message}", true);
                 }
             });
         }
     }
+
 }

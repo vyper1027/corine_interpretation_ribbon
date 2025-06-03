@@ -9,6 +9,7 @@ namespace ProAppModule2.UI.Buttons
         {
             await LayerValidationService.ValidateLayerConformity();
             await LayerValidationService.ValidateNullFields();
+            //await LayerValidationService.ValidateChangedFeaturesByAttributeAsync();
         }
     }
 }

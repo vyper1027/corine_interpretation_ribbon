@@ -7,6 +7,8 @@ using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 using ProAppModule2;
+using ArcGIS.Desktop.Editing;
+using MessageBox = ArcGIS.Desktop.Framework.Dialogs.MessageBox;
 
 public static class LayerValidationService
 {
@@ -144,5 +146,102 @@ public static class LayerValidationService
             }
         });
     }
+
+    public static async Task ValidateChangedFeaturesByAttributeAsync()
+    {
+        await QueuedTask.Run(async () =>
+        {
+            var capaCorine = await Utils.GetDynamicLayer("capaCorine") as FeatureLayer;
+            if (capaCorine == null)
+            {
+                Utils.SendMessageToDockPane("❌ No se encontró la capa Corine.", true);
+                return;
+            }
+
+            var featureClass = capaCorine.GetFeatureClass();
+            var noCambiados = new List<long>();
+            var modificados = new List<long>();
+
+            using (var cursor = featureClass.Search())
+            {
+                while (cursor.MoveNext())
+                {
+                    using (var row = cursor.Current)
+                    {
+                        int cambio = Convert.ToInt32(row["cambio"]);
+                        long oid = row.GetObjectID();
+
+                        if (cambio == 0)
+                            noCambiados.Add(oid);
+                        else
+                            modificados.Add(oid);
+                    }
+                }
+            }
+
+            if (noCambiados.Any())
+            {
+                string listado = string.Join(", ", noCambiados.Take(10));
+                if (noCambiados.Count > 10)
+                    listado += "...";
+
+                Utils.SendMessageToDockPane($"❌ {noCambiados.Count} polígonos con atributo cambio = 0 (no modificados).\nEj: {listado}", true);
+
+                // Mostrar advertencia usando ArcGIS MessageBox
+                var result = MessageBox.Show(
+                    $"Se encontraron {noCambiados.Count} polígonos con cambio = 0.\n¿Deseas actualizar su valor a cambio = 1?",
+                    "Advertencia",
+                    System.Windows.MessageBoxButton.YesNo,
+                    System.Windows.MessageBoxImage.Warning);
+
+                if (result == System.Windows.MessageBoxResult.Yes)
+                {
+                    Utils.SendMessageToDockPane("cambiando atributos...", true);
+                    var table = capaCorine.GetTable();
+                    var editOperation = new EditOperation
+                    {
+                        Name = "Actualizar atributos CAMBIO",
+                        SelectNewFeatures = false
+                    };
+
+                    foreach (var oid in noCambiados)
+                    {
+                        editOperation.Modify(table, oid, new Dictionary<string, object> { { "cambio", 1 } });
+                    }
+
+                    bool success = editOperation.Execute();
+                    if (success)
+                        Utils.SendMessageToDockPane("✅ Se actualizaron los valores de cambio = 0 a cambio = 1.", true);
+                    else
+                        Utils.SendMessageToDockPane("❌ Hubo un error al aplicar los cambios.", true);
+                }
+                else
+                {
+                    Utils.SendMessageToDockPane("⚠️ No se realizaron cambios en los atributos.", true);
+                }
+            }
+            else
+            {
+                Utils.SendMessageToDockPane("✅ Todos los polígonos fueron modificados.", true);
+            }
+
+            Utils.SendMessageToDockPane(
+                $"ℹ️ Total revisados: {noCambiados.Count + modificados.Count}\n✔️ Modificados: {noCambiados.Count}\n",true);
+
+            // Mostrar botón en el dockpane (opcional) si se quisiera realizar la validacion desde el dockpane
+            // var vm = FrameworkApplication.DockPaneManager.Find("ProAppModule2_Corine_Analysis_DockPane") as CorineAnalysisDockpaneViewModel;
+            // if (vm != null)
+            // {
+            //     vm.CambioBotonVisibility = Visibility.Visible;
+            //     vm.SetPoligonosNoCambiados(noCambiados);
+            // }
+        });
+    }
+
+
+
+
+
+
 
 }

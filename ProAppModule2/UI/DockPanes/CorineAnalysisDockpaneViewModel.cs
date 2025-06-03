@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using ArcGIS.Desktop.Core;
@@ -41,6 +42,14 @@ namespace ProAppModule2.UI.DockPanes
         /// </summary>
         private readonly object _lockBookmarkCollections = new object();
         private readonly object _lockMapCollections = new object();
+        private Visibility _cambioBotonVisibility = Visibility.Collapsed;
+
+        public Visibility CambioBotonVisibility
+        {
+            get => _cambioBotonVisibility;
+            set => SetProperty(ref _cambioBotonVisibility, value);
+        }
+
 
 
         /// <summary>
