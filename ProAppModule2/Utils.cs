@@ -198,7 +198,8 @@ namespace ProAppModule2
                 {
                     "vectoresDeCambio" => @"^Cambios_\d{2}_\d{2}$",
                     "capaCorine" => @"^CLC\d{4}_[A-Z]\d+_asignacion$",
-                    "capaBase" => @"^CLC\d{4}_[A-Z]\d+$", // sin "_asignacion"
+                    "capaBase" => @"^CLC\d{4}_[A-Z]\d+$",
+                    "recorteEntrega" => @"^Mes_Interpretacion_\d+_Recorte_V\d+$",
                     _ => null
                 };
 
@@ -210,6 +211,7 @@ namespace ProAppModule2
                     "vectoresDeCambio" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana1")),
                     "capaBase" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana1")),
                     "capaCorine" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana2")),
+                    "recorteEntrega" => mapPanes.FirstOrDefault(p => p.Caption.Contains("Ventana2")),
                     _ => null
                 };
 

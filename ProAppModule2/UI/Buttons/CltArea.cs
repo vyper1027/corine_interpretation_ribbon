@@ -32,9 +32,12 @@ namespace ProAppModule2.UI.Buttons
                 {
                     var layer1 = await Utils.GetDynamicLayer("vectoresDeCambio");
                     var layer2 = await Utils.GetDynamicLayer("capaCorine");
+                    var layer3 = await Utils.GetDynamicLayer("recorteEntrega");
 
                     var layerName1 = layer1?.Name ?? "No se encontro la capa 1";
                     var layerName2 = layer2?.Name ?? "No se encontro la capa 2";
+                    var layerName3 = layer3?.Name ?? "No se encontro la capa 2";
+
 
                     var map = MapView.Active?.Map;
                     if (map == null)
@@ -49,8 +52,11 @@ namespace ProAppModule2.UI.Buttons
                     var featureLayer2 = map.GetLayersAsFlattenedList()
                                            .OfType<FeatureLayer>()
                                            .FirstOrDefault(fl => fl.Name.Equals(layerName2));
+                    var featureLayer3 = map.GetLayersAsFlattenedList()
+                                           .OfType<FeatureLayer>()
+                                           .FirstOrDefault(fl => fl.Name.Equals(layerName3));
 
-                    if (featureLayer1 == null && featureLayer2 == null)
+                    if (featureLayer1 == null && featureLayer2 == null && featureLayer3 == null)
                     {
                         Utils.SendMessageToDockPane($"No se encontraron las capas '{layerName1}' ni '{layerName2}'.");
                         return;
@@ -63,6 +69,10 @@ namespace ProAppModule2.UI.Buttons
                     else if (featureLayer2 != null && featureLayer2.GetSelection().GetCount() > 0)
                     {
                         CalcularArea(featureLayer2, layerName2);
+                    }
+                    else if (featureLayer3 != null && featureLayer3.GetSelection().GetCount() > 0)
+                    {
+                        CalcularArea(featureLayer3, layerName3);
                     }
                     else
                     {

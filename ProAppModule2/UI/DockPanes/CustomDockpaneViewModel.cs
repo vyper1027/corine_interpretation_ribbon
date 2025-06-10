@@ -131,17 +131,57 @@ namespace ProAppModule2.UI.DockPanes
 
         /// <summary>
         /// Aplica reglas lógicas antes de guardar los atributos.
+        /// Solo asigna 'cambio = 2' si el campo 'codigo' fue realmente modificado.
         /// </summary>
         private void AplicarReglasDeNegocio()
         {
-            var nuevoCodigo = _attributeInspector["codigo"]?.ToString();
-
-            if (!string.IsNullOrEmpty(nuevoCodigo))
+            if (_attributeInspector.MapMember == null || _attributeInspector.ObjectID < 0)
             {
-                _attributeInspector["cambio"] = 2;
-                Utils.SendMessageToDockPane("cambio=2", true);
+                Utils.SendMessageToDockPane("No se pudo aplicar la regla: objeto inválido.");
+                return;
             }
+
+            QueuedTask.Run(() =>
+            {
+                var featureLayer = _attributeInspector.MapMember as ArcGIS.Desktop.Mapping.FeatureLayer;
+
+                if (featureLayer == null)
+                {
+                    Utils.SendMessageToDockPane("No se pudo acceder a la capa de entidades.");
+                    return;
+                }
+
+                var table = featureLayer.GetTable();
+
+                var queryFilter = new ArcGIS.Core.Data.QueryFilter
+                {
+                    WhereClause = $"OBJECTID = {_attributeInspector.ObjectID}"
+                };
+
+                using (var rowCursor = table.Search(queryFilter, false))
+                {
+                    if (rowCursor.MoveNext())
+                    {
+                        using (var row = rowCursor.Current)
+                        {
+                            var originalCodigo = row["codigo"]?.ToString();
+                            var nuevoCodigo = _attributeInspector["codigo"]?.ToString();
+
+                            if (!string.Equals(originalCodigo, nuevoCodigo))
+                            {
+                                _attributeInspector["cambio"] = 2;
+                                Utils.SendMessageToDockPane("cambio=2", true);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Utils.SendMessageToDockPane("No se encontró el registro original para comparar.");
+                    }
+                }
+            });
         }
+
 
 
         /// <summary>

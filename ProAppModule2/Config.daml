@@ -114,7 +114,7 @@
 		<group id="ProAppModule2_Group12" caption="Validaciones" appearsOnAddInTab="true">			
 			<button refID="ProAppModule2_Validate_Corine_Layer" size="middle"/>
 			<button refID="ProAppModule2_Validate_Corine_Layer_Topology" size="middle"/>
-			<button refID="ProAppModule2_Validate_Corine_Layer_Unchanged_Polygons" size="middle"/>
+			<!--<button refID="ProAppModule2_Validate_Corine_Layer_Unchanged_Polygons" size="middle"/>-->
 		</group>
 
 		<!--<group id="ProAppModule2_Group13" caption="Validar topologia" appearsOnAddInTab="true">
@@ -246,11 +246,11 @@
 			 </tooltip>
 		 </button>
 		  
-		  <button id="ProAppModule2_Validate_Corine_Layer_Unchanged_Polygons" keytip="z2" caption="Poligonos Sin Cambio" className="UI.Buttons.ValidateUnchangedPolygons" loadOnClick="true" smallImage="EditingSequentialAttributesTool16" largeImage="EditingSequentialAttributesTool32">
+		  <!--<button id="ProAppModule2_Validate_Corine_Layer_Unchanged_Polygons" keytip="z2" caption="Poligonos Sin Cambio" className="UI.Buttons.ValidateUnchangedPolygons" loadOnClick="true" smallImage="EditingSequentialAttributesTool16" largeImage="EditingSequentialAttributesTool32">
 			  <tooltip heading="Modifica el atributo cambio para todos los poligonos con cambio=0">
 				  <disabledText />
 			  </tooltip>
-		  </button>
+		  </button>-->
 		  
 	  </controls>
 		

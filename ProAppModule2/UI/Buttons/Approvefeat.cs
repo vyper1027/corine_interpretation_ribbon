@@ -211,7 +211,19 @@ namespace ProAppModule2.UI.Buttons
                                 using (RowBuffer rowBuffer = targetTable.CreateRowBuffer())
                                 {
                                     // Copiar atributos
-                                    rowBuffer[targetDefinition.GetShapeField()] = row[targetDefinition.GetShapeField()];
+                                    //rowBuffer[targetDefinition.GetShapeField()] = row[targetDefinition.GetShapeField()];
+
+                                    var shape = row[targetDefinition.GetShapeField()] as Polygon;
+                                    if (shape != null)
+                                    {
+                                        shape = RemoveSmallPolygons(shape);
+                                        if (shape == null || shape.IsEmpty)
+                                            continue; // descartar si ya no queda geometría válida
+                                    }
+
+                                    rowBuffer[targetDefinition.GetShapeField()] = shape;
+
+
                                     rowBuffer["area_ha"] = row["area_ha"];
                                     rowBuffer["cambio"] = 2;
                                     rowBuffer["codigo"] = row["codigo"];
@@ -401,6 +413,38 @@ namespace ProAppModule2.UI.Buttons
                 }
             });
         }
+
+        private Polygon RemoveSmallPolygons(Polygon originalPolygon)
+        {
+            var spatialRef9377 = SpatialReferenceBuilder.CreateSpatialReference(9377);
+
+            List<Polygon> validParts = new List<Polygon>();
+
+            foreach (var part in originalPolygon.Parts)
+            {
+                // Crear polígono individual a partir del anillo
+                var partPolygon = PolygonBuilder.CreatePolygon(part, originalPolygon.SpatialReference);
+
+                // Proyectar para cálculo de área en metros cuadrados
+                var projected = GeometryEngine.Instance.Project(partPolygon, spatialRef9377) as Polygon;
+
+                double area = GeometryEngine.Instance.Area(projected);
+
+                if (area >= 50000) // >= 5 ha
+                {
+                    validParts.Add(partPolygon);
+                }
+            }
+
+            if (validParts.Count == 0)
+            {
+                return null; // todos los anillos eran pequeños
+            }
+
+            // Unir todos los polígonos válidos en un solo multiparte
+            return GeometryEngine.Instance.Union(validParts) as Polygon;
+        }
+
 
         public async Task ExplodeMultipartFeatures(FeatureLayer targetLayer, IReadOnlyList<long> oids)
         {
